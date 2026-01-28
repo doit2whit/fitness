@@ -19,16 +19,25 @@ const DEFAULT_BODY_PARTS = [
 ];
 
 const DEFAULT_MOVEMENTS = [
-  { id: '1', name: 'Bench Press', bodyParts: ['Chest', 'Triceps'] },
-  { id: '2', name: 'Squat', bodyParts: ['Legs', 'Glutes', 'Core'] },
-  { id: '3', name: 'Deadlift', bodyParts: ['Back', 'Legs', 'Core'] },
-  { id: '4', name: 'Overhead Press', bodyParts: ['Shoulders', 'Triceps'] },
-  { id: '5', name: 'Barbell Row', bodyParts: ['Back', 'Biceps'] },
-  { id: '6', name: 'Pull-ups', bodyParts: ['Back', 'Biceps'] },
+  { id: '1', name: 'Bench Press', bodyParts: ['Chest', 'Triceps', 'Shoulders'] },
+  { id: '2', name: 'Barbell Squats', bodyParts: ['Quads', 'Glutes', 'Core'] },
+  { id: '3', name: 'Deadlift', bodyParts: ['Back', 'Hamstrings', 'Glutes', 'Core'] },
+  { id: '4', name: 'Overhead Press', bodyParts: ['Shoulders', 'Triceps', 'Core'] },
+  { id: '5', name: 'Barbell Row', bodyParts: ['Back', 'Biceps', 'Core'] },
+  { id: '6', name: 'Pull-Ups', bodyParts: ['Back', 'Biceps', 'Core'] },
   { id: '7', name: 'Dumbbell Curl', bodyParts: ['Biceps'] },
-  { id: '8', name: 'Tricep Pushdown', bodyParts: ['Triceps'] },
-  { id: '9', name: 'Leg Press', bodyParts: ['Legs', 'Glutes'] },
-  { id: '10', name: 'Lat Pulldown', bodyParts: ['Back', 'Biceps'] }
+  { id: '8', name: 'Tricep Press', bodyParts: ['Triceps'] },
+  { id: '9', name: 'Leg Press', bodyParts: ['Quads', 'Glutes'] },
+  { id: '10', name: 'Dumbbell Fly', bodyParts: ['Chest', 'Shoulders'] },
+  { id: '11', name: 'Reverse Lunges', bodyParts: ['Quads', 'Glutes', 'Hamstrings', 'Core'] },
+  { id: '12', name: 'Forward Lunges', bodyParts: ['Quads', 'Glutes', 'Hamstrings', 'Core'] },
+  { id: '13', name: 'Split Squat', bodyParts: ['Quads', 'Glutes', 'Hamstrings', 'Core'] },
+  { id: '14', name: 'Romanian Dead Lift', bodyParts: ['Hamstrings', 'Glutes', 'Back', 'Core'] },
+  { id: '15', name: 'SLDL', bodyParts: ['Hamstrings', 'Glutes', 'Back', 'Core'] },
+  { id: '16', name: 'Dumbbell Row', bodyParts: ['Back', 'Biceps', 'Core'] },
+  { id: '17', name: 'Calf Raises', bodyParts: ['Calves'] },
+  { id: '18', name: 'Farmers Walk', bodyParts: ['Forearms', 'Core', 'Traps', 'Shoulders'] },
+  { id: '19', name: 'Hex Bar Deadlift', bodyParts: ['Quads', 'Glutes', 'Back', 'Hamstrings', 'Core'] }
 ];
 
 const DEFAULT_BAR_WEIGHT = { lbs: 45, kg: 20 };
@@ -548,6 +557,7 @@ const SetCircle = ({
   difficulty,
   restTime,
   isGo,
+  prevSetRepStartTime,
   onWeightClick,
   onCircleClick,
   onCircleLongPress,
@@ -556,15 +566,42 @@ const SetCircle = ({
 }) => {
   const longPressHandlers = useLongPress(onCircleLongPress, 3000);
   const difficultyLevel = DIFFICULTY_LEVELS[difficulty] || DIFFICULTY_LEVELS[0];
+  const [liveTime, setLiveTime] = useState(null);
 
   const hasReps = reps !== null && reps !== undefined && reps > 0;
   const showGo = isGo && !hasReps;
 
+  // Live timer: counts up from when the previous set started reps until this set shows GO
+  useEffect(() => {
+    // Only run live timer if:
+    // 1. Previous set has a repStartTime (meaning it's been started)
+    // 2. This set doesn't have a final restTime yet (meaning we haven't clicked GO on this set)
+    // 3. This set doesn't have reps yet
+    if (prevSetRepStartTime && restTime === null && !hasReps) {
+      const updateTimer = () => {
+        const elapsed = Math.round((Date.now() - prevSetRepStartTime) / 1000);
+        setLiveTime(elapsed);
+      };
+      updateTimer(); // Initial update
+      const interval = setInterval(updateTimer, 1000);
+      return () => clearInterval(interval);
+    } else {
+      setLiveTime(null);
+    }
+  }, [prevSetRepStartTime, restTime, hasReps]);
+
+  // Determine what to show in the timer area
+  const timerDisplay = restTime !== null && restTime !== undefined
+    ? formatTime(restTime)  // Final rest time (set is complete)
+    : liveTime !== null
+      ? formatTime(liveTime)  // Live counting timer
+      : '';
+
   return (
     <div className="flex flex-col items-center gap-2">
-      {/* Rest time display above circle */}
-      <div className="h-5 text-xs text-gray-400 font-mono">
-        {restTime !== null && restTime !== undefined ? formatTime(restTime) : ''}
+      {/* Rest time display above circle - shows live timer or final time */}
+      <div className={`h-5 text-xs font-mono ${liveTime !== null ? 'text-orange-500 font-semibold' : 'text-gray-400'}`}>
+        {timerDisplay}
       </div>
 
       <button
@@ -781,6 +818,7 @@ const ExerciseTracker = ({
                     difficulty={set.difficulty || 0}
                     restTime={set.restTime}
                     isGo={set.isGo}
+                    prevSetRepStartTime={index > 0 ? exercise.plannedSets[index - 1].repStartTime : null}
                     onWeightClick={() => handleWeightClick(index)}
                     onCircleClick={() => handleCircleClick(index)}
                     onCircleLongPress={() => handleCircleLongPress(index)}
