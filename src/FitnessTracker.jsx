@@ -865,8 +865,9 @@ const ExerciseTracker = ({
                 )}
               </div>
             ))}
-            {/* Floating timer after last set - shows when last set has reps */}
+            {/* Floating timer after last set - shows when last set has reps and exercise not complete */}
             {(() => {
+              if (exercise.isComplete) return null;
               const lastSet = exercise.plannedSets[exercise.plannedSets.length - 1];
               const lastSetHasReps = lastSet && lastSet.reps !== null && lastSet.reps !== undefined && lastSet.reps > 0;
               const lastSetHasRepStartTime = lastSet && lastSet.repStartTime;
