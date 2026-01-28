@@ -557,7 +557,7 @@ const SetCircle = ({
   difficulty,
   restTime,
   isGo,
-  repStartTime,
+  prevSetRepStartTime,
   onWeightClick,
   onCircleClick,
   onCircleLongPress,
@@ -571,15 +571,16 @@ const SetCircle = ({
   const hasReps = reps !== null && reps !== undefined && reps > 0;
   const showGo = isGo && !hasReps;
 
-  // Live timer: counts up from when THIS set got its first rep
-  // Shows above this set, counting until the next set shows GO (which freezes this timer)
+  // Live timer: counts up from when the PREVIOUS set got reps
+  // Shows above THIS set (the next set), counting until this set shows GO
   useEffect(() => {
     // Run live timer if:
-    // 1. This set has a repStartTime (meaning reps were recorded)
-    // 2. This set doesn't have a final restTime yet (next set hasn't shown GO)
-    if (repStartTime && (restTime === null || restTime === undefined)) {
+    // 1. Previous set has a repStartTime (meaning previous set was completed)
+    // 2. This set doesn't have reps yet (we're still resting before this set)
+    // 3. restTime isn't already frozen (from previous set)
+    if (prevSetRepStartTime && !hasReps && (restTime === null || restTime === undefined)) {
       const updateTimer = () => {
-        const elapsed = Math.round((Date.now() - repStartTime) / 1000);
+        const elapsed = Math.round((Date.now() - prevSetRepStartTime) / 1000);
         setLiveTime(elapsed);
       };
       updateTimer(); // Initial update
@@ -588,18 +589,19 @@ const SetCircle = ({
     } else {
       setLiveTime(null);
     }
-  }, [repStartTime, restTime]);
+  }, [prevSetRepStartTime, restTime, hasReps]);
 
   // Determine what to show in the timer area
+  // restTime here is the PREVIOUS set's frozen rest time (stored on prev set, passed as prop)
   const timerDisplay = restTime !== null && restTime !== undefined
-    ? formatTime(restTime)  // Final rest time (frozen when next set showed GO)
+    ? formatTime(restTime)  // Final rest time from previous set
     : liveTime !== null
       ? formatTime(liveTime)  // Live counting timer
       : '';
 
   return (
     <div className="flex flex-col items-center gap-2">
-      {/* Rest time display above circle - shows live timer or final time */}
+      {/* Rest time display above circle - shows previous set's rest time (live or frozen) */}
       <div className={`h-5 text-xs font-mono ${liveTime !== null ? 'text-orange-500 font-semibold' : 'text-gray-400'}`}>
         {timerDisplay}
       </div>
@@ -638,6 +640,41 @@ const SetCircle = ({
       >
         {difficulty === 0 ? '—' : difficultyLevel.label.split(' ')[0]}
       </button>
+    </div>
+  );
+};
+
+// Floating Timer Component - shows after last set when it has reps but no next set exists yet
+const FloatingRestTimer = ({ lastSetRepStartTime }) => {
+  const [liveTime, setLiveTime] = useState(null);
+
+  useEffect(() => {
+    if (lastSetRepStartTime) {
+      const updateTimer = () => {
+        const elapsed = Math.round((Date.now() - lastSetRepStartTime) / 1000);
+        setLiveTime(elapsed);
+      };
+      updateTimer();
+      const interval = setInterval(updateTimer, 1000);
+      return () => clearInterval(interval);
+    } else {
+      setLiveTime(null);
+    }
+  }, [lastSetRepStartTime]);
+
+  if (liveTime === null) return null;
+
+  return (
+    <div className="flex flex-col items-center gap-2 flex-shrink-0">
+      <div className="h-5 text-xs font-mono text-orange-500 font-semibold">
+        {formatTime(liveTime)}
+      </div>
+      <div className="text-sm text-gray-400 px-2 py-1">⏱</div>
+      <div className="w-14 h-14 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-xs">
+        +
+      </div>
+      <span className="text-xs text-gray-400">Next?</span>
+      <div className="w-14 h-6" />
     </div>
   );
 };
@@ -816,9 +853,9 @@ const ExerciseTracker = ({
                     weight={set.weight}
                     reps={set.reps}
                     difficulty={set.difficulty || 0}
-                    restTime={set.restTime}
+                    restTime={index > 0 ? exercise.plannedSets[index - 1].restTime : null}
                     isGo={set.isGo}
-                    repStartTime={set.repStartTime}
+                    prevSetRepStartTime={index > 0 ? exercise.plannedSets[index - 1].repStartTime : null}
                     onWeightClick={() => handleWeightClick(index)}
                     onCircleClick={() => handleCircleClick(index)}
                     onCircleLongPress={() => handleCircleLongPress(index)}
@@ -828,6 +865,16 @@ const ExerciseTracker = ({
                 )}
               </div>
             ))}
+            {/* Floating timer after last set - shows when last set has reps */}
+            {(() => {
+              const lastSet = exercise.plannedSets[exercise.plannedSets.length - 1];
+              const lastSetHasReps = lastSet && lastSet.reps !== null && lastSet.reps !== undefined && lastSet.reps > 0;
+              const lastSetHasRepStartTime = lastSet && lastSet.repStartTime;
+              if (lastSetHasReps && lastSetHasRepStartTime) {
+                return <FloatingRestTimer lastSetRepStartTime={lastSet.repStartTime} />;
+              }
+              return null;
+            })()}
           </div>
         </div>
 
