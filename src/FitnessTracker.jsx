@@ -118,6 +118,42 @@ const getLastExerciseData = (movementId, workoutHistory, defaultUnit) => {
   return { weight: DEFAULT_WEIGHT, sets: DEFAULT_SETS };
 };
 
+// Get max weight and reps from last workout containing this movement (for reminder display)
+const getLastExerciseMaxWeight = (movementId, workoutHistory) => {
+  for (const workout of workoutHistory) {
+    const exercise = workout.exercises.find(ex => ex.movementId === movementId);
+    if (exercise && exercise.sets.length > 0) {
+      // Find the set with maximum weight
+      let maxWeight = 0;
+      let repsAtMax = 0;
+      exercise.sets.forEach(set => {
+        if (set.weight > maxWeight) {
+          maxWeight = set.weight;
+          repsAtMax = set.reps;
+        }
+      });
+      return { weight: maxWeight, reps: repsAtMax, unit: workout.unit || 'lbs' };
+    }
+  }
+  return null;
+};
+
+// Calculate total volume for a workout (weight × reps for all sets)
+const calculateWorkoutVolume = (workout) => {
+  let total = 0;
+  workout.exercises.forEach(exercise => {
+    exercise.sets.forEach(set => {
+      if (set.reps !== null && set.reps !== undefined) {
+        total += set.weight * set.reps;
+      }
+    });
+  });
+  return total;
+};
+
+// Convert kg to lbs
+const kgToLbs = (kg) => Math.round(kg * 2.20462);
+
 // ============================================================================
 // CUSTOM HOOKS
 // ============================================================================
@@ -282,6 +318,21 @@ const Icons = {
   History: () => (
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  ),
+  Lightning: () => (
+    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+    </svg>
+  ),
+  Check: () => (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+    </svg>
+  ),
+  CheckCircle: () => (
+    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
     </svg>
   )
 };
@@ -489,12 +540,14 @@ const TimerDisplay = ({ label, time, isRunning, onReset }) => (
   </div>
 );
 
-// Set Circle Component
+// Set Circle Component with GO state and rest timer
 const SetCircle = ({
   setIndex,
   weight,
   reps,
   difficulty,
+  restTime,
+  isGo,
   onWeightClick,
   onCircleClick,
   onCircleLongPress,
@@ -504,10 +557,16 @@ const SetCircle = ({
   const longPressHandlers = useLongPress(onCircleLongPress, 3000);
   const difficultyLevel = DIFFICULTY_LEVELS[difficulty] || DIFFICULTY_LEVELS[0];
 
-  const hasReps = reps !== null && reps !== undefined;
+  const hasReps = reps !== null && reps !== undefined && reps > 0;
+  const showGo = isGo && !hasReps;
 
   return (
     <div className="flex flex-col items-center gap-2">
+      {/* Rest time display above circle */}
+      <div className="h-5 text-xs text-gray-400 font-mono">
+        {restTime !== null && restTime !== undefined ? formatTime(restTime) : ''}
+      </div>
+
       <button
         onClick={onWeightClick}
         className="text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors px-2 py-1 rounded hover:bg-gray-100"
@@ -519,13 +578,15 @@ const SetCircle = ({
         onClick={onCircleClick}
         {...longPressHandlers}
         className={`w-14 h-14 rounded-full border-3 flex items-center justify-center text-lg font-bold transition-all select-none ${
-          hasReps
-            ? 'bg-blue-100 border-blue-400 text-blue-700'
-            : 'bg-white border-gray-300 text-gray-400 hover:border-gray-400'
+          showGo
+            ? 'bg-green-100 border-green-400 text-green-700'
+            : hasReps
+              ? 'bg-blue-100 border-blue-400 text-blue-700'
+              : 'bg-white border-gray-300 text-gray-400 hover:border-gray-400'
         }`}
         style={{ borderWidth: '3px' }}
       >
-        {hasReps ? reps : ''}
+        {showGo ? 'GO' : hasReps ? reps : ''}
       </button>
 
       <span className="text-xs text-gray-500">Set {setIndex + 1}</span>
@@ -544,7 +605,7 @@ const SetCircle = ({
   );
 };
 
-// Exercise Tracker Component with Add/Remove Set Arrows
+// Exercise Tracker Component with GO state, rest timers, completion tracking, and unit selection
 const ExerciseTracker = ({
   exercise,
   movementName,
@@ -552,11 +613,16 @@ const ExerciseTracker = ({
   onAddSet,
   onRemoveSet,
   onRemoveExercise,
-  unit
+  onUpdateExercise,
+  onMarkComplete,
+  defaultUnit
 }) => {
   const [editingWeightIndex, setEditingWeightIndex] = useState(null);
   const [tempWeight, setTempWeight] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  // Exercise-level unit (defaults to defaultUnit if not set)
+  const exerciseUnit = exercise.unit || defaultUnit;
 
   const handleWeightClick = (index) => {
     setEditingWeightIndex(index);
@@ -572,13 +638,24 @@ const ExerciseTracker = ({
   };
 
   const handleCircleClick = (index) => {
-    const currentReps = exercise.plannedSets[index].reps;
-    const newReps = currentReps === null ? 0 : currentReps + 1;
-    onUpdateSet(index, { reps: newReps });
+    const set = exercise.plannedSets[index];
+    const currentReps = set.reps;
+    const isCurrentlyGo = set.isGo;
+
+    if (!isCurrentlyGo && (currentReps === null || currentReps === undefined)) {
+      // Empty -> GO state
+      onUpdateSet(index, { isGo: true, reps: null });
+    } else if (isCurrentlyGo && (currentReps === null || currentReps === undefined || currentReps === 0)) {
+      // GO -> 1 rep (starts the timer for this set, stops timer for previous set)
+      onUpdateSet(index, { isGo: false, reps: 1, repStartTime: Date.now() });
+    } else {
+      // Increment reps
+      onUpdateSet(index, { reps: (currentReps || 0) + 1 });
+    }
   };
 
   const handleCircleLongPress = (index) => {
-    onUpdateSet(index, { reps: null, difficulty: 0 });
+    onUpdateSet(index, { reps: null, difficulty: 0, isGo: false, restTime: null, repStartTime: null });
   };
 
   const handleDifficultyClick = (index) => {
@@ -600,6 +677,15 @@ const ExerciseTracker = ({
     onRemoveExercise();
   };
 
+  const handleUnitToggle = () => {
+    const newUnit = exerciseUnit === 'lbs' ? 'kg' : 'lbs';
+    onUpdateExercise({ unit: newUnit });
+  };
+
+  const handleToggleComplete = () => {
+    onMarkComplete(!exercise.isComplete);
+  };
+
   // Get the last set's weight for adding new sets
   const lastSetWeight = exercise.plannedSets.length > 0
     ? exercise.plannedSets[exercise.plannedSets.length - 1].weight
@@ -607,16 +693,46 @@ const ExerciseTracker = ({
 
   return (
     <>
-      <Card className="p-4">
+      <Card className={`p-4 ${exercise.isComplete ? 'bg-green-50 border-green-200' : ''}`}>
         <div className="flex items-center justify-between mb-4">
-          <h4 className="font-semibold text-gray-900">{movementName}</h4>
-          <button
-            onClick={onRemoveExercise}
-            className="text-gray-400 hover:text-red-500 transition-colors"
-          >
-            <Icons.Trash />
-          </button>
+          <div className="flex items-center gap-2">
+            <h4 className="font-semibold text-gray-900">{movementName}</h4>
+            {/* Unit toggle button */}
+            <button
+              onClick={handleUnitToggle}
+              className="text-xs px-2 py-0.5 rounded bg-gray-100 hover:bg-gray-200 text-gray-600 transition-colors"
+              title="Toggle unit"
+            >
+              {exerciseUnit}
+            </button>
+          </div>
+          <div className="flex items-center gap-2">
+            {/* Complete button */}
+            <button
+              onClick={handleToggleComplete}
+              className={`p-1.5 rounded transition-colors ${
+                exercise.isComplete
+                  ? 'text-green-600 bg-green-100 hover:bg-green-200'
+                  : 'text-gray-400 hover:text-green-600 hover:bg-green-50'
+              }`}
+              title={exercise.isComplete ? 'Mark incomplete' : 'Mark complete'}
+            >
+              <Icons.CheckCircle />
+            </button>
+            <button
+              onClick={onRemoveExercise}
+              className="text-gray-400 hover:text-red-500 transition-colors"
+            >
+              <Icons.Trash />
+            </button>
+          </div>
         </div>
+
+        {exercise.isComplete && exercise.completionTime && (
+          <div className="text-sm text-green-600 mb-3">
+            Completed in {formatTime(Math.round(exercise.completionTime / 1000))}
+          </div>
+        )}
 
         <div className="flex items-center gap-2">
           {/* Up/Down arrows on the left */}
@@ -643,6 +759,7 @@ const ExerciseTracker = ({
               <div key={index} className="flex-shrink-0">
                 {editingWeightIndex === index ? (
                   <div className="flex flex-col items-center gap-2">
+                    <div className="h-5" /> {/* Spacer for rest time */}
                     <input
                       type="number"
                       value={tempWeight}
@@ -662,11 +779,13 @@ const ExerciseTracker = ({
                     weight={set.weight}
                     reps={set.reps}
                     difficulty={set.difficulty || 0}
+                    restTime={set.restTime}
+                    isGo={set.isGo}
                     onWeightClick={() => handleWeightClick(index)}
                     onCircleClick={() => handleCircleClick(index)}
                     onCircleLongPress={() => handleCircleLongPress(index)}
                     onDifficultyClick={() => handleDifficultyClick(index)}
-                    unit={unit}
+                    unit={exerciseUnit}
                   />
                 )}
               </div>
@@ -675,7 +794,7 @@ const ExerciseTracker = ({
         </div>
 
         <p className="text-xs text-gray-500 mt-3">
-          Tap circle to add reps • Hold 3s to clear • Tap difficulty to cycle
+          Tap: empty → GO → reps • Hold 3s to clear • Tap ✓ when done
         </p>
       </Card>
 
@@ -697,6 +816,7 @@ const WorkoutSummaryCard = ({ workout, movements, onClick }) => {
   const totalSets = workout.exercises.reduce((sum, ex) =>
     sum + ex.sets.filter(s => s.reps !== null && s.reps !== undefined).length, 0
   );
+  const isQuickWorkout = workout.duration && workout.duration < 1800; // Less than 30 minutes
 
   const exerciseNames = workout.exercises
     .map(ex => movements.find(m => m.id === ex.movementId)?.name || 'Unknown')
@@ -735,7 +855,14 @@ const WorkoutSummaryCard = ({ workout, movements, onClick }) => {
           </div>
         </div>
         <div className="text-right">
-          <div className="text-lg font-semibold text-gray-900">{totalSets}</div>
+          <div className="flex items-center gap-1">
+            <span className="text-lg font-semibold text-gray-900">{totalSets}</span>
+            {isQuickWorkout && (
+              <span className="text-yellow-500" title="Quick workout (under 30 min)">
+                <Icons.Lightning />
+              </span>
+            )}
+          </div>
           <div className="text-xs text-gray-500">sets</div>
         </div>
       </div>
@@ -744,11 +871,32 @@ const WorkoutSummaryCard = ({ workout, movements, onClick }) => {
 };
 
 // Workout Detail View Component
-const WorkoutDetailView = ({ workout, movements, onBack }) => {
+const WorkoutDetailView = ({ workout, movements, onBack, onUpdateWorkout }) => {
+  const [editingExerciseIndex, setEditingExerciseIndex] = useState(null);
+  const [editingNotes, setEditingNotes] = useState(false);
+  const [notes, setNotes] = useState(workout.notes || '');
+
   const avgDifficulty = getWorkoutAvgDifficulty(workout);
   const difficultyInfo = getDifficultyInfo(avgDifficulty);
+  const isQuickWorkout = workout.duration && workout.duration < 1800;
 
   const getMovementName = (id) => movements.find(m => m.id === id)?.name || 'Unknown';
+
+  const handleChangeMovement = (exIndex, newMovementId) => {
+    if (onUpdateWorkout) {
+      const updatedExercises = [...workout.exercises];
+      updatedExercises[exIndex] = { ...updatedExercises[exIndex], movementId: newMovementId };
+      onUpdateWorkout({ ...workout, exercises: updatedExercises });
+    }
+    setEditingExerciseIndex(null);
+  };
+
+  const handleSaveNotes = () => {
+    if (onUpdateWorkout) {
+      onUpdateWorkout({ ...workout, notes });
+    }
+    setEditingNotes(false);
+  };
 
   return (
     <div className="space-y-4">
@@ -762,7 +910,14 @@ const WorkoutDetailView = ({ workout, movements, onBack }) => {
       <Card className="p-4">
         <div className="flex items-start justify-between">
           <div>
-            <h3 className="text-xl font-semibold text-gray-900">{workout.templateName}</h3>
+            <div className="flex items-center gap-2">
+              <h3 className="text-xl font-semibold text-gray-900">{workout.templateName}</h3>
+              {isQuickWorkout && (
+                <span className="text-yellow-500" title="Quick workout (under 30 min)">
+                  <Icons.Lightning />
+                </span>
+              )}
+            </div>
             <p className="text-gray-500 mt-1">
               {new Date(workout.startTime).toLocaleDateString('en-US', {
                 weekday: 'long',
@@ -786,6 +941,42 @@ const WorkoutDetailView = ({ workout, movements, onBack }) => {
             <span>Duration: {formatTime(workout.duration)}</span>
           </div>
         )}
+
+        {/* Notes section */}
+        <div className="mt-4 pt-4 border-t border-gray-100">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-gray-700">Notes</span>
+            {!editingNotes && (
+              <button
+                onClick={() => setEditingNotes(true)}
+                className="text-gray-400 hover:text-indigo-600 transition-colors"
+              >
+                <Icons.Edit />
+              </button>
+            )}
+          </div>
+          {editingNotes ? (
+            <div className="space-y-2">
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                rows={3}
+                placeholder="Add notes about this workout..."
+              />
+              <div className="flex gap-2 justify-end">
+                <Button variant="ghost" size="sm" onClick={() => { setNotes(workout.notes || ''); setEditingNotes(false); }}>
+                  Cancel
+                </Button>
+                <Button size="sm" onClick={handleSaveNotes}>Save</Button>
+              </div>
+            </div>
+          ) : (
+            <p className="text-gray-600 text-sm">
+              {workout.notes || <span className="text-gray-400 italic">No notes</span>}
+            </p>
+          )}
+        </div>
       </Card>
 
       <div className="space-y-3">
@@ -795,7 +986,36 @@ const WorkoutDetailView = ({ workout, movements, onBack }) => {
 
           return (
             <Card key={exIndex} className="p-4">
-              <h4 className="font-medium text-gray-900 mb-3">{getMovementName(exercise.movementId)}</h4>
+              <div className="flex items-center justify-between mb-3">
+                {editingExerciseIndex === exIndex ? (
+                  <select
+                    value={exercise.movementId}
+                    onChange={(e) => handleChangeMovement(exIndex, e.target.value)}
+                    className="flex-1 px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    autoFocus
+                  >
+                    {movements.map(m => (
+                      <option key={m.id} value={m.id}>{m.name}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <>
+                    <h4 className="font-medium text-gray-900">{getMovementName(exercise.movementId)}</h4>
+                    <button
+                      onClick={() => setEditingExerciseIndex(exIndex)}
+                      className="text-gray-400 hover:text-indigo-600 transition-colors"
+                      title="Change exercise"
+                    >
+                      <Icons.Edit />
+                    </button>
+                  </>
+                )}
+              </div>
+              {exercise.completionTime && (
+                <div className="text-xs text-gray-500 mb-2">
+                  Completed in {formatTime(exercise.completionTime)}
+                </div>
+              )}
               <div className="space-y-2">
                 {completedSets.map((set, setIndex) => {
                   const diffLevel = DIFFICULTY_LEVELS[set.difficulty] || DIFFICULTY_LEVELS[0];
@@ -803,8 +1023,13 @@ const WorkoutDetailView = ({ workout, movements, onBack }) => {
                     <div key={setIndex} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
                       <div className="flex items-center gap-4">
                         <span className="text-sm font-medium text-gray-500 w-12">Set {setIndex + 1}</span>
-                        <span className="font-medium">{set.weight} {workout.unit}</span>
+                        <span className="font-medium">{set.weight} {set.unit || workout.unit}</span>
                         <span className="text-gray-600">× {set.reps} reps</span>
+                        {set.restTime && (
+                          <span className="text-xs text-gray-400">
+                            Rest: {formatTime(set.restTime)}
+                          </span>
+                        )}
                       </div>
                       {set.difficulty > 0 && (
                         <span
@@ -1320,7 +1545,7 @@ const WorkoutTemplates = ({ templates, setTemplates, movements }) => {
 };
 
 // Active Workout Component
-const ActiveWorkout = ({ movements, templates, workoutHistory, setWorkoutHistory, settings }) => {
+const ActiveWorkout = ({ movements, setMovements, templates, workoutHistory, setWorkoutHistory, settings }) => {
   const [isWorkoutActive, setIsWorkoutActive] = useState(false);
   const [currentWorkout, setCurrentWorkout] = useState(null);
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
@@ -1339,11 +1564,11 @@ const ActiveWorkout = ({ movements, templates, workoutHistory, setWorkoutHistory
     startingWeight: '',
     isOneSide: false,
     barWeight: '',
-    ignoreBarWeight: false
+    ignoreBarWeight: false,
+    exerciseUnit: null
   });
 
   const workoutTimer = useTimer(isWorkoutActive);
-  const restTimer = useTimer(isWorkoutActive && currentWorkout?.exercises?.length > 0);
 
   // Reset workout date to today when not in active workout
   useEffect(() => {
@@ -1387,6 +1612,11 @@ const ActiveWorkout = ({ movements, templates, workoutHistory, setWorkoutHistory
     workoutTimer.reset();
   };
 
+  // Workout summary state
+  const [showWorkoutSummary, setShowWorkoutSummary] = useState(false);
+  const [workoutNotes, setWorkoutNotes] = useState('');
+  const [completedWorkoutData, setCompletedWorkoutData] = useState(null);
+
   const endWorkout = () => {
     if (!currentWorkout) return;
 
@@ -1396,22 +1626,44 @@ const ActiveWorkout = ({ movements, templates, workoutHistory, setWorkoutHistory
       duration: workoutTimer.seconds,
       exercises: currentWorkout.exercises.map(ex => ({
         movementId: ex.movementId,
+        unit: ex.unit || settings.defaultUnit,
+        completionTime: ex.completionTime || null,
         sets: ex.plannedSets
-          .filter(s => s.reps !== null && s.reps !== undefined)
+          .filter(s => s.reps !== null && s.reps !== undefined && s.reps > 0)
           .map(s => ({
             id: generateId(),
             weight: s.weight,
             reps: s.reps,
             difficulty: s.difficulty || 0,
+            restTime: s.restTime || null,
+            unit: ex.unit || settings.defaultUnit,
             timestamp: new Date().toISOString()
           }))
       }))
     };
 
     if (completedWorkout.exercises.some(ex => ex.sets.length > 0)) {
-      setWorkoutHistory([completedWorkout, ...workoutHistory]);
+      setCompletedWorkoutData(completedWorkout);
+      setWorkoutNotes('');
+      setShowWorkoutSummary(true);
+    } else {
+      setCurrentWorkout(null);
+      setIsWorkoutActive(false);
+      workoutTimer.reset();
     }
+  };
 
+  const saveAndCloseWorkout = () => {
+    if (!completedWorkoutData) return;
+
+    const workoutWithNotes = {
+      ...completedWorkoutData,
+      notes: workoutNotes.trim() || null
+    };
+
+    setWorkoutHistory([workoutWithNotes, ...workoutHistory]);
+    setCompletedWorkoutData(null);
+    setShowWorkoutSummary(false);
     setCurrentWorkout(null);
     setIsWorkoutActive(false);
     workoutTimer.reset();
@@ -1420,6 +1672,7 @@ const ActiveWorkout = ({ movements, templates, workoutHistory, setWorkoutHistory
   const addExercise = () => {
     if (!newExercise.movementId || !newExercise.startingWeight || newExercise.plannedSets < 1) return;
 
+    const exerciseUnit = newExercise.exerciseUnit || settings.defaultUnit;
     const weight = parseFloat(newExercise.startingWeight);
     let totalWeight = weight;
 
@@ -1427,17 +1680,19 @@ const ActiveWorkout = ({ movements, templates, workoutHistory, setWorkoutHistory
       if (newExercise.ignoreBarWeight) {
         totalWeight = weight * 2;
       } else {
-        const barWeight = parseFloat(newExercise.barWeight) || DEFAULT_BAR_WEIGHT[settings.defaultUnit];
+        const barWeight = parseFloat(newExercise.barWeight) || DEFAULT_BAR_WEIGHT[exerciseUnit];
         totalWeight = (weight * 2) + barWeight;
       }
     }
 
     const exercise = {
       movementId: newExercise.movementId,
+      unit: exerciseUnit,
       plannedSets: Array.from({ length: newExercise.plannedSets }, () => ({
         weight: totalWeight,
         reps: null,
-        difficulty: 0
+        difficulty: 0,
+        isGo: false
       }))
     };
 
@@ -1452,7 +1707,8 @@ const ActiveWorkout = ({ movements, templates, workoutHistory, setWorkoutHistory
       startingWeight: '',
       isOneSide: false,
       barWeight: '',
-      ignoreBarWeight: false
+      ignoreBarWeight: false,
+      exerciseUnit: null
     });
     setShowAddExercise(false);
   };
@@ -1460,18 +1716,55 @@ const ActiveWorkout = ({ movements, templates, workoutHistory, setWorkoutHistory
   const updateSet = (exerciseIndex, setIndex, updates) => {
     setCurrentWorkout(prev => {
       const newExercises = [...prev.exercises];
-      newExercises[exerciseIndex] = {
-        ...newExercises[exerciseIndex],
-        plannedSets: newExercises[exerciseIndex].plannedSets.map((set, i) =>
-          i === setIndex ? { ...set, ...updates } : set
-        )
-      };
+      const exercise = { ...newExercises[exerciseIndex] };
+      const plannedSets = [...exercise.plannedSets];
+
+      // If setting isGo to true on a set, record the rest time for the previous set
+      if (updates.isGo === true && setIndex > 0) {
+        const prevSet = plannedSets[setIndex - 1];
+        if (prevSet.repStartTime) {
+          const restTime = Math.round((Date.now() - prevSet.repStartTime) / 1000);
+          plannedSets[setIndex - 1] = { ...prevSet, restTime };
+        }
+      }
+
+      // Update the set
+      plannedSets[setIndex] = { ...plannedSets[setIndex], ...updates };
+
+      // Update the exercise's first rep time if this is the first set getting reps
+      if (updates.repStartTime && !exercise.firstRepTime) {
+        exercise.firstRepTime = updates.repStartTime;
+      }
+
+      exercise.plannedSets = plannedSets;
+      newExercises[exerciseIndex] = exercise;
+
       return { ...prev, exercises: newExercises };
     });
+  };
 
-    if (updates.reps !== undefined && updates.reps !== null) {
-      restTimer.reset();
-    }
+  const updateExercise = (exerciseIndex, updates) => {
+    setCurrentWorkout(prev => {
+      const newExercises = [...prev.exercises];
+      newExercises[exerciseIndex] = { ...newExercises[exerciseIndex], ...updates };
+      return { ...prev, exercises: newExercises };
+    });
+  };
+
+  const markExerciseComplete = (exerciseIndex, isComplete) => {
+    setCurrentWorkout(prev => {
+      const newExercises = [...prev.exercises];
+      const exercise = newExercises[exerciseIndex];
+
+      if (isComplete && exercise.firstRepTime) {
+        const completionTime = Date.now() - exercise.firstRepTime;
+        newExercises[exerciseIndex] = { ...exercise, isComplete: true, completionTime };
+      } else {
+        newExercises[exerciseIndex] = { ...exercise, isComplete, completionTime: null };
+      }
+
+      return { ...prev, exercises: newExercises };
+    });
   };
 
   const addSetToExercise = (exerciseIndex, weight) => {
@@ -1509,12 +1802,21 @@ const ActiveWorkout = ({ movements, templates, workoutHistory, setWorkoutHistory
   const getMovementName = (id) => movements.find(m => m.id === id)?.name || 'Unknown';
 
   // Show workout detail view
+  // Function to update a workout in history
+  const updateWorkoutInHistory = (updatedWorkout) => {
+    setWorkoutHistory(prev =>
+      prev.map(w => w.id === updatedWorkout.id ? updatedWorkout : w)
+    );
+    setViewingWorkout(updatedWorkout);
+  };
+
   if (viewingWorkout) {
     return (
       <WorkoutDetailView
         workout={viewingWorkout}
         movements={movements}
         onBack={() => setViewingWorkout(null)}
+        onUpdateWorkout={updateWorkoutInHistory}
       />
     );
   }
@@ -1697,12 +1999,6 @@ const ActiveWorkout = ({ movements, templates, workoutHistory, setWorkoutHistory
 
         <div className="flex gap-4 mt-4">
           <TimerDisplay label="Workout" time={workoutTimer.formatted} isRunning={true} />
-          <TimerDisplay
-            label="Rest"
-            time={restTimer.formatted}
-            isRunning={currentWorkout.exercises.some(ex => ex.plannedSets.some(s => s.reps !== null))}
-            onReset={restTimer.reset}
-          />
         </div>
       </Card>
 
@@ -1716,7 +2012,9 @@ const ActiveWorkout = ({ movements, templates, workoutHistory, setWorkoutHistory
             onAddSet={(weight) => addSetToExercise(exIndex, weight)}
             onRemoveSet={() => removeSetFromExercise(exIndex)}
             onRemoveExercise={() => removeExercise(exIndex)}
-            unit={settings.defaultUnit}
+            onUpdateExercise={(updates) => updateExercise(exIndex, updates)}
+            onMarkComplete={(isComplete) => markExerciseComplete(exIndex, isComplete)}
+            defaultUnit={settings.defaultUnit}
           />
         ))}
       </div>
@@ -1731,15 +2029,49 @@ const ActiveWorkout = ({ movements, templates, workoutHistory, setWorkoutHistory
 
       <Modal isOpen={showAddExercise} onClose={() => setShowAddExercise(false)} title="Add Exercise">
         <div className="space-y-4">
-          <Select
-            label="Exercise"
-            value={newExercise.movementId}
-            onChange={(e) => setNewExercise({ ...newExercise, movementId: e.target.value })}
-            options={[
-              { value: '', label: 'Select an exercise...' },
-              ...movements.map(m => ({ value: m.id, label: m.name }))
-            ]}
-          />
+          {/* Exercise selection with "Add new" option */}
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-gray-700">Exercise</label>
+            <select
+              value={newExercise.movementId}
+              onChange={(e) => {
+                if (e.target.value === '__add_new__') {
+                  const name = prompt('Enter new exercise name:');
+                  if (name && name.trim()) {
+                    const newMovement = {
+                      id: generateId(),
+                      name: name.trim(),
+                      bodyParts: []
+                    };
+                    setMovements(prev => [...prev, newMovement]);
+                    setNewExercise({ ...newExercise, movementId: newMovement.id });
+                  }
+                } else {
+                  setNewExercise({ ...newExercise, movementId: e.target.value });
+                }
+              }}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white"
+            >
+              <option value="">Select an exercise...</option>
+              {movements.map(m => (
+                <option key={m.id} value={m.id}>{m.name}</option>
+              ))}
+              <option value="__add_new__">+ Add new exercise...</option>
+            </select>
+          </div>
+
+          {/* Last weight reminder */}
+          {newExercise.movementId && (() => {
+            const lastData = getLastExerciseMaxWeight(newExercise.movementId, workoutHistory);
+            if (lastData) {
+              return (
+                <div className="text-sm text-indigo-600 bg-indigo-50 rounded-lg px-3 py-2">
+                  Last time: {lastData.weight} {lastData.unit} for {lastData.reps} reps
+                </div>
+              );
+            }
+            return null;
+          })()}
 
           <NumberStepper
             label="Planned Sets"
@@ -1752,7 +2084,7 @@ const ActiveWorkout = ({ movements, templates, workoutHistory, setWorkoutHistory
           <WeightInputSetup
             value={newExercise.startingWeight}
             onChange={(v) => setNewExercise({ ...newExercise, startingWeight: v })}
-            unit={settings.defaultUnit}
+            unit={newExercise.exerciseUnit || settings.defaultUnit}
             isOneSide={newExercise.isOneSide}
             onOneSideChange={(v) => setNewExercise({ ...newExercise, isOneSide: v })}
             barWeight={newExercise.barWeight}
@@ -1760,6 +2092,20 @@ const ActiveWorkout = ({ movements, templates, workoutHistory, setWorkoutHistory
             ignoreBarWeight={newExercise.ignoreBarWeight}
             onIgnoreBarWeightChange={(v) => setNewExercise({ ...newExercise, ignoreBarWeight: v })}
           />
+
+          {/* Unit toggle for this exercise */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-700">Weight unit:</span>
+            <button
+              onClick={() => setNewExercise({
+                ...newExercise,
+                exerciseUnit: (newExercise.exerciseUnit || settings.defaultUnit) === 'lbs' ? 'kg' : 'lbs'
+              })}
+              className="px-3 py-1 text-sm rounded bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
+            >
+              {newExercise.exerciseUnit || settings.defaultUnit}
+            </button>
+          </div>
 
           <div className="flex gap-2 justify-end">
             <Button variant="secondary" onClick={() => setShowAddExercise(false)}>Cancel</Button>
@@ -1771,6 +2117,82 @@ const ActiveWorkout = ({ movements, templates, workoutHistory, setWorkoutHistory
             </Button>
           </div>
         </div>
+      </Modal>
+
+      {/* Workout Summary Modal */}
+      <Modal isOpen={showWorkoutSummary} onClose={() => {}} title="Workout Complete!" size="lg">
+        {completedWorkoutData && (
+          <div className="space-y-4">
+            {/* Duration */}
+            <div className="flex items-center gap-3 bg-gray-50 rounded-lg p-4">
+              <Icons.Timer />
+              <div>
+                <div className="text-2xl font-bold text-gray-900">
+                  {formatTime(completedWorkoutData.duration)}
+                </div>
+                <div className="text-sm text-gray-500">Total Duration</div>
+              </div>
+              {completedWorkoutData.duration < 1800 && (
+                <span className="ml-auto text-yellow-500" title="Quick workout!">
+                  <Icons.Lightning />
+                </span>
+              )}
+            </div>
+
+            {/* Volume */}
+            {(() => {
+              const currentVolume = calculateWorkoutVolume(completedWorkoutData);
+              const previousWorkout = workoutHistory[0];
+              const previousVolume = previousWorkout ? calculateWorkoutVolume(previousWorkout) : 0;
+              const volumeChange = previousVolume > 0
+                ? Math.round(((currentVolume - previousVolume) / previousVolume) * 100)
+                : null;
+
+              return (
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-2xl font-bold text-gray-900">
+                        {currentVolume.toLocaleString()} lbs
+                      </div>
+                      <div className="text-sm text-gray-500">Total Volume</div>
+                    </div>
+                    {volumeChange !== null && (
+                      <div className={`text-lg font-semibold ${
+                        volumeChange >= 0 ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {volumeChange >= 0 ? '+' : ''}{volumeChange}%
+                        <div className="text-xs text-gray-500 font-normal">vs last workout</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Exercises summary */}
+            <div className="text-sm text-gray-600">
+              {completedWorkoutData.exercises.filter(ex => ex.sets.length > 0).length} exercises,{' '}
+              {completedWorkoutData.exercises.reduce((sum, ex) => sum + ex.sets.length, 0)} sets completed
+            </div>
+
+            {/* Notes */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">Notes (optional)</label>
+              <textarea
+                value={workoutNotes}
+                onChange={(e) => setWorkoutNotes(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                rows={3}
+                placeholder="How did the workout feel? Any PRs or notes..."
+              />
+            </div>
+
+            <Button onClick={saveAndCloseWorkout} className="w-full">
+              Save & Close
+            </Button>
+          </div>
+        )}
       </Modal>
     </div>
   );
@@ -1788,8 +2210,21 @@ const TrendsView = ({ workoutHistory, movements, settings }) => {
     workoutHistory.forEach(workout => {
       const exercise = workout.exercises.find(ex => ex.movementId === selectedMovement);
       if (exercise && exercise.sets.length > 0) {
-        const maxWeight = Math.max(...exercise.sets.map(s => s.weight));
-        const totalVolume = exercise.sets.reduce((sum, s) => sum + (s.weight * s.reps), 0);
+        // Convert all weights to lbs for consistent display
+        const exerciseUnit = exercise.unit || workout.unit || 'lbs';
+
+        const weights = exercise.sets.map(s => {
+          const setUnit = s.unit || exerciseUnit;
+          return setUnit === 'kg' ? kgToLbs(s.weight) : s.weight;
+        });
+
+        const maxWeight = Math.max(...weights);
+
+        const totalVolume = exercise.sets.reduce((sum, s) => {
+          const setUnit = s.unit || exerciseUnit;
+          const weightInLbs = setUnit === 'kg' ? kgToLbs(s.weight) : s.weight;
+          return sum + (weightInLbs * s.reps);
+        }, 0);
 
         data.push({
           date: new Date(workout.startTime).toLocaleDateString(),
@@ -1845,7 +2280,7 @@ const TrendsView = ({ workoutHistory, movements, settings }) => {
                     dataKey="maxWeight"
                     stroke="#4f46e5"
                     strokeWidth={2}
-                    name={`Max Weight (${settings.defaultUnit})`}
+                    name="Max Weight (lbs)"
                     dot={{ fill: '#4f46e5' }}
                   />
                 </LineChart>
@@ -1868,7 +2303,7 @@ const TrendsView = ({ workoutHistory, movements, settings }) => {
                     dataKey="totalVolume"
                     stroke="#10b981"
                     strokeWidth={2}
-                    name={`Total Volume (${settings.defaultUnit} × reps)`}
+                    name="Total Volume (lbs × reps)"
                     dot={{ fill: '#10b981' }}
                   />
                 </LineChart>
@@ -1883,7 +2318,7 @@ const TrendsView = ({ workoutHistory, movements, settings }) => {
                 <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                   <span className="font-medium">{session.date}</span>
                   <div className="flex gap-4 text-sm text-gray-600">
-                    <span>Max: {session.maxWeight} {settings.defaultUnit}</span>
+                    <span>Max: {session.maxWeight} lbs</span>
                     <span>{session.sets} sets</span>
                     <span>{session.totalReps} total reps</span>
                   </div>
@@ -2469,6 +2904,7 @@ export default function FitnessTracker() {
           {activeTab === 'workout' && (
             <ActiveWorkout
               movements={movements}
+              setMovements={setMovements}
               templates={templates}
               workoutHistory={workoutHistory}
               setWorkoutHistory={setWorkoutHistory}
