@@ -557,7 +557,7 @@ const SetCircle = ({
   difficulty,
   restTime,
   isGo,
-  prevSetRepStartTime,
+  repStartTime,
   onWeightClick,
   onCircleClick,
   onCircleLongPress,
@@ -571,15 +571,15 @@ const SetCircle = ({
   const hasReps = reps !== null && reps !== undefined && reps > 0;
   const showGo = isGo && !hasReps;
 
-  // Live timer: counts up from when the previous set started reps until this set shows GO
+  // Live timer: counts up from when THIS set got its first rep
+  // Shows above this set, counting until the next set shows GO (which freezes this timer)
   useEffect(() => {
-    // Only run live timer if:
-    // 1. Previous set has a repStartTime (meaning it's been started)
-    // 2. This set doesn't have a final restTime yet (meaning we haven't clicked GO on this set)
-    // 3. This set doesn't have reps yet
-    if (prevSetRepStartTime && restTime === null && !hasReps) {
+    // Run live timer if:
+    // 1. This set has a repStartTime (meaning reps were recorded)
+    // 2. This set doesn't have a final restTime yet (next set hasn't shown GO)
+    if (repStartTime && (restTime === null || restTime === undefined)) {
       const updateTimer = () => {
-        const elapsed = Math.round((Date.now() - prevSetRepStartTime) / 1000);
+        const elapsed = Math.round((Date.now() - repStartTime) / 1000);
         setLiveTime(elapsed);
       };
       updateTimer(); // Initial update
@@ -588,11 +588,11 @@ const SetCircle = ({
     } else {
       setLiveTime(null);
     }
-  }, [prevSetRepStartTime, restTime, hasReps]);
+  }, [repStartTime, restTime]);
 
   // Determine what to show in the timer area
   const timerDisplay = restTime !== null && restTime !== undefined
-    ? formatTime(restTime)  // Final rest time (set is complete)
+    ? formatTime(restTime)  // Final rest time (frozen when next set showed GO)
     : liveTime !== null
       ? formatTime(liveTime)  // Live counting timer
       : '';
@@ -818,7 +818,7 @@ const ExerciseTracker = ({
                     difficulty={set.difficulty || 0}
                     restTime={set.restTime}
                     isGo={set.isGo}
-                    prevSetRepStartTime={index > 0 ? exercise.plannedSets[index - 1].repStartTime : null}
+                    repStartTime={set.repStartTime}
                     onWeightClick={() => handleWeightClick(index)}
                     onCircleClick={() => handleCircleClick(index)}
                     onCircleLongPress={() => handleCircleLongPress(index)}
