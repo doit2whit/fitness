@@ -9,8 +9,9 @@ const WorkoutSummaryCard = ({ workout, movements, onClick }) => {
   const avgDifficulty = getWorkoutAvgDifficulty(workout);
   const difficultyInfo = getDifficultyInfo(avgDifficulty);
   const totalSets = workout.exercises.reduce((sum, ex) =>
-    sum + ex.sets.filter(s => s.reps !== null && s.reps !== undefined).length, 0
+    sum + (ex.sets ? ex.sets.filter(s => s.reps !== null && s.reps !== undefined).length : 0), 0
   );
+  const intervalCount = workout.exercises.filter(ex => ex.type === 'interval').length;
   const isQuickWorkout = workout.duration && workout.duration < 1800;
 
   const exerciseNames = workout.exercises
@@ -58,7 +59,12 @@ const WorkoutSummaryCard = ({ workout, movements, onClick }) => {
               </span>
             )}
           </div>
-          <div className="text-xs text-gray-500">sets</div>
+          <div className="text-xs text-gray-500">
+            {totalSets > 0 ? 'sets' : ''}
+            {totalSets > 0 && intervalCount > 0 ? ' + ' : ''}
+            {intervalCount > 0 ? `${intervalCount} interval${intervalCount !== 1 ? 's' : ''}` : ''}
+            {totalSets === 0 && intervalCount === 0 ? 'sets' : ''}
+          </div>
         </div>
       </div>
     </Card>

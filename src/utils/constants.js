@@ -37,6 +37,11 @@ export const DEFAULT_BAR_WEIGHT = { lbs: 45, kg: 20 };
 export const DEFAULT_SETS = 5;
 export const DEFAULT_WEIGHT = 1;
 
+// Interval exercise defaults
+export const DEFAULT_WORK_DURATION = 30;  // seconds
+export const DEFAULT_REST_DURATION = 10;  // seconds
+export const DEFAULT_ROUNDS = 6;
+
 export const STORAGE_KEYS = {
   movements: 'fitness_movements',
   bodyParts: 'fitness_bodyParts',

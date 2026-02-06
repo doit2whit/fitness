@@ -115,6 +115,62 @@ const WorkoutDetailView = ({ workout, movements, onBack, onUpdateWorkout }) => {
 
       <div className="space-y-3">
         {workout.exercises.map((exercise, exIndex) => {
+          // Interval exercise display
+          if (exercise.type === 'interval') {
+            const diffLevel = exercise.difficulty > 0 ? DIFFICULTY_LEVELS[exercise.difficulty] : null;
+            return (
+              <Card key={exIndex} className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  {editingExerciseIndex === exIndex ? (
+                    <select
+                      value={exercise.movementId}
+                      onChange={(e) => handleChangeMovement(exIndex, e.target.value)}
+                      className="flex-1 px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      autoFocus
+                    >
+                      {movements.map(m => (
+                        <option key={m.id} value={m.id}>{m.name}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-2">
+                        <Icons.Interval />
+                        <h4 className="font-medium text-gray-900">{getMovementName(exercise.movementId)}</h4>
+                      </div>
+                      <button
+                        onClick={() => setEditingExerciseIndex(exIndex)}
+                        className="text-gray-400 hover:text-indigo-600 transition-colors"
+                        title="Change exercise"
+                      >
+                        <Icons.Edit />
+                      </button>
+                    </>
+                  )}
+                </div>
+                <div className="bg-indigo-50 rounded-lg px-3 py-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-indigo-700 font-medium">
+                      {exercise.rounds} rounds × {formatTime(exercise.workDuration)} work / {formatTime(exercise.restDuration)} rest
+                    </span>
+                    {diffLevel && (
+                      <span
+                        className="text-xs px-2 py-0.5 rounded-full"
+                        style={{
+                          backgroundColor: diffLevel.color,
+                          color: diffLevel.textColor
+                        }}
+                      >
+                        {diffLevel.label}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            );
+          }
+
+          // Sets-based exercise display (existing)
           const completedSets = exercise.sets.filter(s => s.reps !== null && s.reps !== undefined);
           if (completedSets.length === 0) return null;
 

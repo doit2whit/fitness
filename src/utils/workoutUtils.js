@@ -2,16 +2,25 @@ import { DEFAULT_WEIGHT, DEFAULT_SETS } from './constants';
 
 export const getWorkoutAvgDifficulty = (workout) => {
   let totalDifficulty = 0;
-  let setCount = 0;
+  let ratingCount = 0;
   workout.exercises.forEach(exercise => {
-    exercise.sets.forEach(set => {
-      if (set.difficulty > 0) {
-        totalDifficulty += set.difficulty;
-        setCount++;
+    if (exercise.type === 'interval') {
+      // Interval exercises store a single difficulty at the exercise level
+      if (exercise.difficulty > 0) {
+        totalDifficulty += exercise.difficulty;
+        ratingCount++;
       }
-    });
+    } else {
+      // Sets-based exercises store difficulty per set
+      exercise.sets.forEach(set => {
+        if (set.difficulty > 0) {
+          totalDifficulty += set.difficulty;
+          ratingCount++;
+        }
+      });
+    }
   });
-  return setCount > 0 ? totalDifficulty / setCount : 0;
+  return ratingCount > 0 ? totalDifficulty / ratingCount : 0;
 };
 
 export const getDifficultyInfo = (avgDifficulty) => {
@@ -56,6 +65,8 @@ export const getLastExerciseMaxWeight = (movementId, workoutHistory) => {
 export const calculateWorkoutVolume = (workout) => {
   let total = 0;
   workout.exercises.forEach(exercise => {
+    // Skip interval exercises — no weight × reps to calculate
+    if (exercise.type === 'interval') return;
     exercise.sets.forEach(set => {
       if (set.reps !== null && set.reps !== undefined) {
         total += set.weight * set.reps;
@@ -63,4 +74,11 @@ export const calculateWorkoutVolume = (workout) => {
     });
   });
   return total;
+};
+
+export const calculateIntervalDuration = (exercise) => {
+  if (exercise.type !== 'interval') return 0;
+  const { workDuration = 0, restDuration = 0, rounds = 0 } = exercise;
+  // Work for every round, rest between rounds (not after the last one)
+  return (workDuration * rounds) + (restDuration * Math.max(0, rounds - 1));
 };

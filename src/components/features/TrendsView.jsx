@@ -13,8 +13,8 @@ const TrendsView = ({ workoutHistory, movements, settings }) => {
     const data = [];
 
     workoutHistory.forEach(workout => {
-      const exercise = workout.exercises.find(ex => ex.movementId === selectedMovement);
-      if (exercise && exercise.sets.length > 0) {
+      const exercise = workout.exercises.find(ex => ex.movementId === selectedMovement && ex.type !== 'interval');
+      if (exercise && exercise.sets && exercise.sets.length > 0) {
         const exerciseUnit = exercise.unit || workout.unit || 'lbs';
 
         const weights = exercise.sets.map(s => {
@@ -47,7 +47,8 @@ const TrendsView = ({ workoutHistory, movements, settings }) => {
     const movementIds = new Set();
     workoutHistory.forEach(workout => {
       workout.exercises.forEach(ex => {
-        if (ex.sets.length > 0) movementIds.add(ex.movementId);
+        // Only include sets-based exercises (interval exercises have no weight data to chart)
+        if (ex.type !== 'interval' && ex.sets && ex.sets.length > 0) movementIds.add(ex.movementId);
       });
     });
     return movements.filter(m => movementIds.has(m.id));
