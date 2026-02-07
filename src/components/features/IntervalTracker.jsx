@@ -17,53 +17,101 @@ const IntervalTracker = ({ exercise, movementName, onUpdateExercise, onRemoveExe
     rounds: exercise.rounds
   });
 
-  // Keep screen on while timer is running
-  const isTimerActive = timer.state === 'work' || timer.state === 'rest';
+  // Keep screen on while timer is running (including countdown)
+  const isTimerActive = timer.state === 'countdown' || timer.state === 'work' || timer.state === 'rest';
   useWakeLock(isTimerActive);
 
-  // Mark exercise complete when timer finishes
+  // Sync completed blocks to the exercise data whenever blocks change
   React.useEffect(() => {
-    if (timer.state === 'complete' && !exercise.isComplete) {
-      onUpdateExercise({ isComplete: true });
+    if (timer.state === 'complete') {
+      // Build the blocks array: all completed blocks + the current (just-finished) block
+      const blocks = [
+        ...timer.completedBlocks.map(b => ({ difficulty: b.difficulty, totalTime: b.totalTime })),
+        { difficulty: exercise.currentBlockDifficulty || 0, totalTime: timer.totalElapsed }
+      ];
+      onUpdateExercise({ isComplete: true, blocks });
     }
-  }, [timer.state, exercise.isComplete, onUpdateExercise]);
+  }, [timer.state]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleDifficultySelect = (difficulty) => {
-    onUpdateExercise({ difficulty });
+  // Handle difficulty selection for the current (active) block
+  const handleCurrentBlockDifficulty = (difficulty) => {
+    const blocks = [
+      ...timer.completedBlocks.map(b => ({ difficulty: b.difficulty, totalTime: b.totalTime })),
+      { difficulty, totalTime: timer.totalElapsed }
+    ];
+    onUpdateExercise({ currentBlockDifficulty: difficulty, blocks });
+  };
+
+  // Handle difficulty selection for a previously completed block
+  const handlePastBlockDifficulty = (blockIndex, difficulty) => {
+    timer.setBlockDifficulty(blockIndex, difficulty);
+    // Rebuild blocks array with updated difficulty
+    const blocks = [
+      ...timer.completedBlocks.map(b => ({ difficulty: b.difficulty, totalTime: b.totalTime }))
+    ];
+    // If we're in complete state, include the current block too
+    if (timer.state === 'complete') {
+      blocks.push({ difficulty: exercise.currentBlockDifficulty || 0, totalTime: timer.totalElapsed });
+    }
+    onUpdateExercise({ blocks });
+  };
+
+  const handleGoAgain = () => {
+    // Capture the current block's difficulty before goAgain resets everything
+    const currentDifficulty = exercise.currentBlockDifficulty || 0;
+    // goAgain() pushes { totalTime, difficulty: 0 } into completedBlocks and restarts
+    timer.goAgain();
+    // Now set the difficulty on the block that was just pushed (the last one)
+    const lastIndex = timer.completedBlocks.length - 1;
+    if (lastIndex >= 0) {
+      timer.setBlockDifficulty(lastIndex, currentDifficulty);
+    }
+    // Reset the current block difficulty for the new block
+    onUpdateExercise({ currentBlockDifficulty: 0, isComplete: false });
   };
 
   const isWork = timer.state === 'work';
   const isRest = timer.state === 'rest';
   const isIdle = timer.state === 'idle';
+  const isCountdown = timer.state === 'countdown';
   const isPaused = timer.state === 'paused';
   const isComplete = timer.state === 'complete';
 
+  const hasCompletedBlocks = timer.completedBlocks.length > 0;
+  const currentBlockNumber = timer.completedBlocks.length + 1;
+
   // Background color based on current phase
   const phaseColor = isWork
-    ? 'bg-indigo-50 border-indigo-200'
+    ? 'bg-emerald-50 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-800'
     : isRest
-      ? 'bg-gray-50 border-gray-200'
-      : 'bg-white border-gray-200';
+      ? 'bg-gray-50 dark:bg-navy-900 border-gray-200 dark:border-gray-700'
+      : isCountdown
+        ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800'
+        : 'bg-white dark:bg-navy-800 border-gray-200 dark:border-gray-700';
 
-  const phaseLabel = isWork
-    ? 'WORK'
-    : isRest
-      ? 'REST'
-      : isPaused
-        ? 'PAUSED'
-        : isComplete
-          ? 'COMPLETE'
-          : 'READY';
+  const phaseLabel = isCountdown
+    ? 'GET READY'
+    : isWork
+      ? 'WORK'
+      : isRest
+        ? 'REST'
+        : isPaused
+          ? 'PAUSED'
+          : isComplete
+            ? 'COMPLETE'
+            : 'READY';
 
-  const phaseLabelColor = isWork
-    ? 'text-indigo-600'
-    : isRest
-      ? 'text-gray-500'
-      : isPaused
-        ? 'text-amber-600'
-        : isComplete
-          ? 'text-green-600'
-          : 'text-gray-400';
+  const phaseLabelColor = isCountdown
+    ? 'text-amber-600 dark:text-amber-400'
+    : isWork
+      ? 'text-emerald-600 dark:text-emerald-400'
+      : isRest
+        ? 'text-gray-500 dark:text-gray-400'
+        : isPaused
+          ? 'text-amber-600 dark:text-amber-400'
+          : isComplete
+            ? 'text-green-600 dark:text-green-400'
+            : 'text-gray-400 dark:text-gray-500';
 
   return (
     <Card className={`p-4 border-2 transition-colors ${phaseColor}`}>
@@ -71,11 +119,11 @@ const IntervalTracker = ({ exercise, movementName, onUpdateExercise, onRemoveExe
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Icons.Interval />
-          <h4 className="font-medium text-gray-900">{movementName}</h4>
+          <h4 className="font-medium text-gray-900 dark:text-gray-100">{movementName}</h4>
         </div>
         <button
           onClick={() => setShowRemoveConfirm(true)}
-          className="text-gray-400 hover:text-red-500 transition-colors"
+          className="text-gray-400 dark:text-gray-500 hover:text-red-500 transition-colors"
           title="Remove exercise"
         >
           <Icons.Trash />
@@ -83,11 +131,53 @@ const IntervalTracker = ({ exercise, movementName, onUpdateExercise, onRemoveExe
       </div>
 
       {/* Config summary */}
-      <div className="flex gap-4 text-sm text-gray-500 mb-4">
+      <div className="flex gap-4 text-sm text-gray-500 dark:text-gray-400 mb-4">
         <span>{exercise.rounds} rounds</span>
         <span>{formatTime(exercise.workDuration)} work</span>
         <span>{formatTime(exercise.restDuration)} rest</span>
       </div>
+
+      {/* Completed blocks — shown faded to the left */}
+      {hasCompletedBlocks && (
+        <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
+          {timer.completedBlocks.map((block, i) => {
+            const diffLevel = block.difficulty > 0 ? DIFFICULTY_LEVELS[block.difficulty] : null;
+            return (
+              <div
+                key={i}
+                className="flex-shrink-0 bg-gray-100 dark:bg-navy-900 rounded-lg px-3 py-2 opacity-60 min-w-[80px]"
+              >
+                <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Block {i + 1}</div>
+                <div className="text-sm font-mono text-gray-600 dark:text-gray-400">{formatTime(block.totalTime)}</div>
+                <div className="flex justify-center gap-1 mt-1">
+                  {DIFFICULTY_LEVELS.slice(1).map(level => (
+                    <button
+                      key={level.value}
+                      onClick={() => handlePastBlockDifficulty(i, level.value)}
+                      className={`w-5 h-5 rounded-full text-[8px] font-bold transition-all ${
+                        block.difficulty === level.value
+                          ? 'ring-1 ring-offset-1 ring-emerald-400 scale-110 opacity-100'
+                          : 'opacity-50 hover:opacity-100'
+                      }`}
+                      style={{ backgroundColor: level.color, color: level.textColor }}
+                      title={level.label}
+                    >
+                      {level.value}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Block label when multiple blocks exist */}
+      {hasCompletedBlocks && !isIdle && (
+        <div className="text-xs text-gray-400 dark:text-gray-500 text-center mb-1">
+          Block {currentBlockNumber}
+        </div>
+      )}
 
       {/* Timer display */}
       <div className="text-center py-4">
@@ -95,12 +185,18 @@ const IntervalTracker = ({ exercise, movementName, onUpdateExercise, onRemoveExe
           {phaseLabel}
         </div>
 
+        {isCountdown && (
+          <div className="text-6xl font-mono font-bold text-amber-600 mb-2">
+            {timer.timeRemaining}
+          </div>
+        )}
+
         {(isWork || isRest || isPaused) && (
           <>
-            <div className="text-5xl font-mono font-bold text-gray-900 mb-2">
+            <div className="text-5xl font-mono font-bold text-gray-900 dark:text-gray-100 mb-2">
               {formatTime(timer.timeRemaining)}
             </div>
-            <div className="text-sm text-gray-500">
+            <div className="text-sm text-gray-500 dark:text-gray-400">
               Round {timer.currentRound} of {exercise.rounds}
             </div>
             {/* Round progress dots */}
@@ -110,10 +206,10 @@ const IntervalTracker = ({ exercise, movementName, onUpdateExercise, onRemoveExe
                   key={i}
                   className={`w-3 h-3 rounded-full transition-colors ${
                     i < timer.currentRound - 1
-                      ? 'bg-indigo-500'                          // completed rounds
+                      ? 'bg-emerald-500'
                       : i === timer.currentRound - 1
-                        ? (isWork ? 'bg-indigo-400 animate-pulse' : 'bg-gray-400 animate-pulse')  // current round
-                        : 'bg-gray-200'                          // upcoming rounds
+                        ? (isWork ? 'bg-emerald-400 animate-pulse' : 'bg-gray-400 animate-pulse')
+                        : 'bg-gray-200 dark:bg-gray-700'
                   }`}
                 />
               ))}
@@ -129,11 +225,11 @@ const IntervalTracker = ({ exercise, movementName, onUpdateExercise, onRemoveExe
 
         {isComplete && (
           <div className="space-y-3">
-            <div className="flex items-center justify-center gap-2 text-green-600">
+            <div className="flex items-center justify-center gap-2 text-green-600 dark:text-green-400">
               <Icons.CheckCircle />
               <span className="text-lg font-semibold">All rounds complete!</span>
             </div>
-            <div className="text-sm text-gray-500">
+            <div className="text-sm text-gray-500 dark:text-gray-400">
               Total time: {formatTime(timer.totalElapsed)}
             </div>
           </div>
@@ -147,7 +243,7 @@ const IntervalTracker = ({ exercise, movementName, onUpdateExercise, onRemoveExe
             <Icons.Play /> Start Timer
           </Button>
         )}
-        {(isWork || isRest) && (
+        {(isCountdown || isWork || isRest) && (
           <Button variant="secondary" onClick={timer.pause}>
             <Icons.Pause /> Pause
           </Button>
@@ -163,24 +259,26 @@ const IntervalTracker = ({ exercise, movementName, onUpdateExercise, onRemoveExe
           </>
         )}
         {isComplete && (
-          <Button variant="ghost" onClick={timer.reset} size="sm">
-            Reset Timer
+          <Button variant="secondary" onClick={handleGoAgain} size="sm">
+            <Icons.Play /> Go Again?
           </Button>
         )}
       </div>
 
-      {/* Difficulty rating — shown after completion */}
+      {/* Difficulty rating for current block — shown after completion */}
       {isComplete && (
-        <div className="mt-4 pt-4 border-t border-gray-200">
-          <p className="text-sm font-medium text-gray-700 mb-2 text-center">How difficult was this?</p>
+        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 text-center">
+            How difficult was {hasCompletedBlocks ? `block ${currentBlockNumber}` : 'this'}?
+          </p>
           <div className="flex justify-center gap-2">
             {DIFFICULTY_LEVELS.slice(1).map(level => (
               <button
                 key={level.value}
-                onClick={() => handleDifficultySelect(level.value)}
+                onClick={() => handleCurrentBlockDifficulty(level.value)}
                 className={`w-10 h-10 rounded-full text-xs font-bold transition-all ${
-                  exercise.difficulty === level.value
-                    ? 'ring-2 ring-offset-2 ring-indigo-500 scale-110'
+                  (exercise.currentBlockDifficulty || 0) === level.value
+                    ? 'ring-2 ring-offset-2 ring-emerald-500 scale-110'
                     : 'opacity-70 hover:opacity-100'
                 }`}
                 style={{
@@ -193,9 +291,9 @@ const IntervalTracker = ({ exercise, movementName, onUpdateExercise, onRemoveExe
               </button>
             ))}
           </div>
-          {exercise.difficulty > 0 && (
-            <p className="text-center text-sm text-gray-500 mt-1">
-              {DIFFICULTY_LEVELS[exercise.difficulty]?.label}
+          {(exercise.currentBlockDifficulty || 0) > 0 && (
+            <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-1">
+              {DIFFICULTY_LEVELS[exercise.currentBlockDifficulty]?.label}
             </p>
           )}
         </div>

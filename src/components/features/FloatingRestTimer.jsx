@@ -25,11 +25,11 @@ const FloatingRestTimer = ({ lastSetRepStartTime }) => {
       <div className="h-5 text-xs font-mono text-orange-500 font-semibold">
         {formatTime(liveTime)}
       </div>
-      <div className="text-sm text-gray-400 px-2 py-1">⏱</div>
-      <div className="w-14 h-14 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-xs">
+      <div className="text-sm text-gray-400 dark:text-gray-500 px-2 py-1">⏱</div>
+      <div className="w-14 h-14 rounded-full border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center text-gray-400 dark:text-gray-500 text-xs">
         +
       </div>
-      <span className="text-xs text-gray-400">Next?</span>
+      <span className="text-xs text-gray-400 dark:text-gray-500">Next?</span>
       <div className="w-14 h-6" />
     </div>
   );

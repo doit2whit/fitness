@@ -88,13 +88,13 @@ const ExerciseTracker = ({
 
   return (
     <>
-      <Card className={`p-4 ${exercise.isComplete ? 'bg-green-50 border-green-200' : ''}`}>
+      <Card className={`p-4 ${exercise.isComplete ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : ''}`}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <h4 className="font-semibold text-gray-900">{movementName}</h4>
+            <h4 className="font-semibold text-gray-900 dark:text-gray-100">{movementName}</h4>
             <button
               onClick={handleUnitToggle}
-              className="text-xs px-2 py-0.5 rounded bg-gray-100 hover:bg-gray-200 text-gray-600 transition-colors"
+              className="text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-navy-900 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-400 transition-colors"
               title="Toggle unit"
             >
               {exerciseUnit}
@@ -105,8 +105,8 @@ const ExerciseTracker = ({
               onClick={handleToggleComplete}
               className={`p-1.5 rounded transition-colors ${
                 exercise.isComplete
-                  ? 'text-green-600 bg-green-100 hover:bg-green-200'
-                  : 'text-gray-400 hover:text-green-600 hover:bg-green-50'
+                  ? 'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 hover:bg-green-200'
+                  : 'text-gray-400 dark:text-gray-500 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20'
               }`}
               title={exercise.isComplete ? 'Mark incomplete' : 'Mark complete'}
             >
@@ -114,7 +114,7 @@ const ExerciseTracker = ({
             </button>
             <button
               onClick={onRemoveExercise}
-              className="text-gray-400 hover:text-red-500 transition-colors"
+              className="text-gray-400 dark:text-gray-500 hover:text-red-500 transition-colors"
             >
               <Icons.Trash />
             </button>
@@ -122,7 +122,7 @@ const ExerciseTracker = ({
         </div>
 
         {exercise.isComplete && exercise.completionTime && (
-          <div className="text-sm text-green-600 mb-3">
+          <div className="text-sm text-green-600 dark:text-green-400 mb-3">
             Completed in {formatTime(Math.round(exercise.completionTime / 1000))}
           </div>
         )}
@@ -131,14 +131,14 @@ const ExerciseTracker = ({
           <div className="flex flex-col gap-1 mr-2">
             <button
               onClick={() => onAddSet(lastSetWeight)}
-              className="w-8 h-8 flex items-center justify-center bg-green-100 hover:bg-green-200 text-green-700 rounded transition-colors"
+              className="w-8 h-8 flex items-center justify-center bg-green-100 dark:bg-green-900/30 hover:bg-green-200 text-green-700 dark:text-green-300 rounded transition-colors"
               title="Add set"
             >
               <Icons.ChevronUp />
             </button>
             <button
               onClick={handleRemoveSetClick}
-              className="w-8 h-8 flex items-center justify-center bg-red-100 hover:bg-red-200 text-red-700 rounded transition-colors"
+              className="w-8 h-8 flex items-center justify-center bg-red-100 dark:bg-red-900/30 hover:bg-red-200 text-red-700 rounded transition-colors"
               title="Remove set"
             >
               <Icons.ChevronDown />
@@ -157,11 +157,11 @@ const ExerciseTracker = ({
                       onChange={(e) => setTempWeight(e.target.value)}
                       onBlur={() => handleWeightSave(index)}
                       onKeyDown={(e) => e.key === 'Enter' && handleWeightSave(index)}
-                      className="w-16 px-2 py-1 text-sm text-center border border-indigo-300 rounded focus:ring-2 focus:ring-indigo-500"
+                      className="w-16 px-2 py-1 text-sm text-center border border-emerald-300 dark:border-emerald-600 rounded focus:ring-2 focus:ring-emerald-500"
                       autoFocus
                     />
                     <div className="w-14 h-14" />
-                    <span className="text-xs text-gray-500">Set {index + 1}</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">Set {index + 1}</span>
                     <div className="w-14 h-6" />
                   </div>
                 ) : (
@@ -195,7 +195,7 @@ const ExerciseTracker = ({
           </div>
         </div>
 
-        <p className="text-xs text-gray-500 mt-3">
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
           Tap: empty → GO → reps • Hold 3s to clear • Tap ✓ when done
         </p>
       </Card>

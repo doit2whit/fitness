@@ -1,3 +1,24 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Chart color variables — Recharts needs hex values, not Tailwind classes */
+:root {
+  --chart-primary: #059669;
+  --chart-secondary: #10b981;
+  --chart-accent: #f59e0b;
+  --chart-grid: #e5e7eb;
+  --chart-text: #374151;
+  --chart-tooltip-bg: #ffffff;
+  color-scheme: light;
+}
+
+.dark {
+  --chart-primary: #34d399;
+  --chart-secondary: #6ee7b7;
+  --chart-accent: #fbbf24;
+  --chart-grid: #1e3a4f;
+  --chart-text: #d1d5db;
+  --chart-tooltip-bg: #1a2332;
+  color-scheme: dark;
+}

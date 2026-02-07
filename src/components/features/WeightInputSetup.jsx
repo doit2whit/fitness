@@ -31,9 +31,9 @@ const WeightInputSetup = ({ value, onChange, unit, isOneSide, onOneSideChange, b
             type="checkbox"
             checked={isOneSide}
             onChange={(e) => onOneSideChange(e.target.checked)}
-            className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+            className="w-4 h-4 text-emerald-600 border-gray-300 dark:border-gray-600 rounded focus:ring-emerald-500"
           />
-          <span className="text-sm text-gray-700">One-side entry</span>
+          <span className="text-sm text-gray-700 dark:text-gray-300">One-side entry</span>
         </label>
 
         {isOneSide && (
@@ -43,22 +43,22 @@ const WeightInputSetup = ({ value, onChange, unit, isOneSide, onOneSideChange, b
                 type="checkbox"
                 checked={ignoreBarWeight}
                 onChange={(e) => onIgnoreBarWeightChange(e.target.checked)}
-                className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                className="w-4 h-4 text-emerald-600 border-gray-300 dark:border-gray-600 rounded focus:ring-emerald-500"
               />
-              <span className="text-sm text-gray-700">Ignore bar weight</span>
+              <span className="text-sm text-gray-700 dark:text-gray-300">Ignore bar weight</span>
             </label>
 
             {!ignoreBarWeight && (
               <div className="flex items-center gap-2 ml-6">
-                <span className="text-sm text-gray-500">Bar:</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">Bar:</span>
                 <input
                   type="number"
                   value={barWeight}
                   onChange={(e) => onBarWeightChange(e.target.value)}
-                  className="w-20 px-2 py-1 text-sm border border-gray-300 rounded"
+                  className="w-20 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded"
                   placeholder={DEFAULT_BAR_WEIGHT[unit]}
                 />
-                <span className="text-sm text-gray-500">{unit}</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">{unit}</span>
               </div>
             )}
           </>
@@ -66,7 +66,7 @@ const WeightInputSetup = ({ value, onChange, unit, isOneSide, onOneSideChange, b
       </div>
 
       {isOneSide && value && (
-        <div className="text-sm text-indigo-600 font-medium">
+        <div className="text-sm text-emerald-600 dark:text-emerald-400 font-medium">
           Total: {calculatedTotal} {unit}
         </div>
       )}

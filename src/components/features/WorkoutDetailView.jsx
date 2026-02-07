@@ -37,7 +37,7 @@ const WorkoutDetailView = ({ workout, movements, onBack, onUpdateWorkout }) => {
     <div className="space-y-4">
       <button
         onClick={onBack}
-        className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+        className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
       >
         <Icons.Back /> Back
       </button>
@@ -46,14 +46,14 @@ const WorkoutDetailView = ({ workout, movements, onBack, onUpdateWorkout }) => {
         <div className="flex items-start justify-between">
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-xl font-semibold text-gray-900">{workout.templateName}</h3>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">{workout.templateName}</h3>
               {isQuickWorkout && (
                 <span className="text-yellow-500" title="Quick workout (under 30 min)">
                   <Icons.Lightning />
                 </span>
               )}
             </div>
-            <p className="text-gray-500 mt-1">
+            <p className="text-gray-500 dark:text-gray-400 mt-1">
               {new Date(workout.startTime).toLocaleDateString('en-US', {
                 weekday: 'long',
                 year: 'numeric',
@@ -71,19 +71,19 @@ const WorkoutDetailView = ({ workout, movements, onBack, onUpdateWorkout }) => {
         </div>
 
         {workout.duration && (
-          <div className="mt-3 flex items-center gap-2 text-gray-600">
+          <div className="mt-3 flex items-center gap-2 text-gray-600 dark:text-gray-400">
             <Icons.Timer />
             <span>Duration: {formatTime(workout.duration)}</span>
           </div>
         )}
 
-        <div className="mt-4 pt-4 border-t border-gray-100">
+        <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-700">Notes</span>
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Notes</span>
             {!editingNotes && (
               <button
                 onClick={() => setEditingNotes(true)}
-                className="text-gray-400 hover:text-indigo-600 transition-colors"
+                className="text-gray-400 dark:text-gray-500 hover:text-emerald-600 transition-colors"
               >
                 <Icons.Edit />
               </button>
@@ -94,7 +94,7 @@ const WorkoutDetailView = ({ workout, movements, onBack, onUpdateWorkout }) => {
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                 rows={3}
                 placeholder="Add notes about this workout..."
               />
@@ -106,8 +106,8 @@ const WorkoutDetailView = ({ workout, movements, onBack, onUpdateWorkout }) => {
               </div>
             </div>
           ) : (
-            <p className="text-gray-600 text-sm">
-              {workout.notes || <span className="text-gray-400 italic">No notes</span>}
+            <p className="text-gray-600 dark:text-gray-400 text-sm">
+              {workout.notes || <span className="text-gray-400 dark:text-gray-500 italic">No notes</span>}
             </p>
           )}
         </div>
@@ -117,7 +117,7 @@ const WorkoutDetailView = ({ workout, movements, onBack, onUpdateWorkout }) => {
         {workout.exercises.map((exercise, exIndex) => {
           // Interval exercise display
           if (exercise.type === 'interval') {
-            const diffLevel = exercise.difficulty > 0 ? DIFFICULTY_LEVELS[exercise.difficulty] : null;
+            const blocks = exercise.blocks || (exercise.difficulty > 0 ? [{ difficulty: exercise.difficulty, totalTime: 0 }] : []);
             return (
               <Card key={exIndex} className="p-4">
                 <div className="flex items-center justify-between mb-3">
@@ -125,7 +125,7 @@ const WorkoutDetailView = ({ workout, movements, onBack, onUpdateWorkout }) => {
                     <select
                       value={exercise.movementId}
                       onChange={(e) => handleChangeMovement(exIndex, e.target.value)}
-                      className="flex-1 px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      className="flex-1 px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500"
                       autoFocus
                     >
                       {movements.map(m => (
@@ -136,11 +136,11 @@ const WorkoutDetailView = ({ workout, movements, onBack, onUpdateWorkout }) => {
                     <>
                       <div className="flex items-center gap-2">
                         <Icons.Interval />
-                        <h4 className="font-medium text-gray-900">{getMovementName(exercise.movementId)}</h4>
+                        <h4 className="font-medium text-gray-900 dark:text-gray-100">{getMovementName(exercise.movementId)}</h4>
                       </div>
                       <button
                         onClick={() => setEditingExerciseIndex(exIndex)}
-                        className="text-gray-400 hover:text-indigo-600 transition-colors"
+                        className="text-gray-400 dark:text-gray-500 hover:text-emerald-600 transition-colors"
                         title="Change exercise"
                       >
                         <Icons.Edit />
@@ -148,24 +148,38 @@ const WorkoutDetailView = ({ workout, movements, onBack, onUpdateWorkout }) => {
                     </>
                   )}
                 </div>
-                <div className="bg-indigo-50 rounded-lg px-3 py-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-indigo-700 font-medium">
-                      {exercise.rounds} rounds × {formatTime(exercise.workDuration)} work / {formatTime(exercise.restDuration)} rest
-                    </span>
-                    {diffLevel && (
-                      <span
-                        className="text-xs px-2 py-0.5 rounded-full"
-                        style={{
-                          backgroundColor: diffLevel.color,
-                          color: diffLevel.textColor
-                        }}
-                      >
-                        {diffLevel.label}
-                      </span>
-                    )}
-                  </div>
+                <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg px-3 py-2 mb-2">
+                  <span className="text-emerald-700 dark:text-emerald-300 font-medium">
+                    {exercise.rounds} rounds × {formatTime(exercise.workDuration)} work / {formatTime(exercise.restDuration)} rest
+                  </span>
                 </div>
+                {blocks.length > 0 && (
+                  <div className="space-y-1.5">
+                    {blocks.map((block, bIdx) => {
+                      const diffLevel = block.difficulty > 0 ? DIFFICULTY_LEVELS[block.difficulty] : null;
+                      return (
+                        <div key={bIdx} className="flex items-center justify-between bg-gray-50 dark:bg-navy-900 rounded-lg px-3 py-2">
+                          <div className="flex items-center gap-3">
+                            <span className="text-sm font-medium text-gray-500 dark:text-gray-400 w-16">
+                              Block {bIdx + 1}
+                            </span>
+                            {block.totalTime > 0 && (
+                              <span className="text-sm text-gray-600 dark:text-gray-400">{formatTime(block.totalTime)}</span>
+                            )}
+                          </div>
+                          {diffLevel && (
+                            <span
+                              className="text-xs px-2 py-0.5 rounded-full"
+                              style={{ backgroundColor: diffLevel.color, color: diffLevel.textColor }}
+                            >
+                              {diffLevel.label}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </Card>
             );
           }
@@ -181,7 +195,7 @@ const WorkoutDetailView = ({ workout, movements, onBack, onUpdateWorkout }) => {
                   <select
                     value={exercise.movementId}
                     onChange={(e) => handleChangeMovement(exIndex, e.target.value)}
-                    className="flex-1 px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    className="flex-1 px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500"
                     autoFocus
                   >
                     {movements.map(m => (
@@ -190,10 +204,10 @@ const WorkoutDetailView = ({ workout, movements, onBack, onUpdateWorkout }) => {
                   </select>
                 ) : (
                   <>
-                    <h4 className="font-medium text-gray-900">{getMovementName(exercise.movementId)}</h4>
+                    <h4 className="font-medium text-gray-900 dark:text-gray-100">{getMovementName(exercise.movementId)}</h4>
                     <button
                       onClick={() => setEditingExerciseIndex(exIndex)}
-                      className="text-gray-400 hover:text-indigo-600 transition-colors"
+                      className="text-gray-400 dark:text-gray-500 hover:text-emerald-600 transition-colors"
                       title="Change exercise"
                     >
                       <Icons.Edit />
@@ -202,7 +216,7 @@ const WorkoutDetailView = ({ workout, movements, onBack, onUpdateWorkout }) => {
                 )}
               </div>
               {exercise.completionTime && (
-                <div className="text-xs text-gray-500 mb-2">
+                <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
                   Completed in {formatTime(exercise.completionTime)}
                 </div>
               )}
@@ -210,13 +224,13 @@ const WorkoutDetailView = ({ workout, movements, onBack, onUpdateWorkout }) => {
                 {completedSets.map((set, setIndex) => {
                   const diffLevel = DIFFICULTY_LEVELS[set.difficulty] || DIFFICULTY_LEVELS[0];
                   return (
-                    <div key={setIndex} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
+                    <div key={setIndex} className="flex items-center justify-between bg-gray-50 dark:bg-navy-900 rounded-lg px-3 py-2">
                       <div className="flex items-center gap-4">
-                        <span className="text-sm font-medium text-gray-500 w-12">Set {setIndex + 1}</span>
+                        <span className="text-sm font-medium text-gray-500 dark:text-gray-400 w-12">Set {setIndex + 1}</span>
                         <span className="font-medium">{set.weight} {set.unit || workout.unit}</span>
-                        <span className="text-gray-600">× {set.reps} reps</span>
+                        <span className="text-gray-600 dark:text-gray-400">× {set.reps} reps</span>
                         {set.restTime && (
-                          <span className="text-xs text-gray-400">
+                          <span className="text-xs text-gray-400 dark:text-gray-500">
                             Rest: {formatTime(set.restTime)}
                           </span>
                         )}

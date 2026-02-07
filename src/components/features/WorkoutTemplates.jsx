@@ -59,14 +59,14 @@ const WorkoutTemplates = ({ templates, setTemplates, movements }) => {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-gray-900">Workout Templates</h3>
+        <h3 className="font-semibold text-gray-900 dark:text-gray-100">Workout Templates</h3>
         <Button size="sm" onClick={() => setShowCreateTemplate(true)}>
           <Icons.Plus /> Create Template
         </Button>
       </div>
 
       {templates.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">
+        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
           No templates yet. Create one to quickly start workouts!
         </div>
       ) : (
@@ -75,7 +75,7 @@ const WorkoutTemplates = ({ templates, setTemplates, movements }) => {
             <Card key={template.id} className="p-4">
               <div className="flex items-start justify-between">
                 <div>
-                  <h4 className="font-medium text-gray-900">{template.name}</h4>
+                  <h4 className="font-medium text-gray-900 dark:text-gray-100">{template.name}</h4>
                   <div className="mt-2 flex flex-wrap gap-1">
                     {template.movements.map(movementId => (
                       <Badge key={movementId} color="blue">
@@ -87,13 +87,13 @@ const WorkoutTemplates = ({ templates, setTemplates, movements }) => {
                 <div className="flex gap-2">
                   <button
                     onClick={() => setEditingTemplate(template)}
-                    className="text-gray-400 hover:text-indigo-600"
+                    className="text-gray-400 dark:text-gray-500 hover:text-emerald-600"
                   >
                     <Icons.Edit />
                   </button>
                   <button
                     onClick={() => handleDeleteTemplate(template.id)}
-                    className="text-gray-400 hover:text-red-600"
+                    className="text-gray-400 dark:text-gray-500 hover:text-red-600"
                   >
                     <Icons.Trash />
                   </button>
@@ -113,7 +113,7 @@ const WorkoutTemplates = ({ templates, setTemplates, movements }) => {
             placeholder="e.g., Push Day, Leg Day"
           />
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Select Movements</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Select Movements</label>
             <div className="max-h-60 overflow-y-auto space-y-1">
               {movements.map(movement => (
                 <button
@@ -121,8 +121,8 @@ const WorkoutTemplates = ({ templates, setTemplates, movements }) => {
                   onClick={() => toggleMovement(movement.id, true)}
                   className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
                     newTemplate.movements.includes(movement.id)
-                      ? 'bg-indigo-100 text-indigo-800 border-2 border-indigo-300'
-                      : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border-2 border-transparent'
+                      ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-200 border-2 border-emerald-300 dark:border-emerald-600'
+                      : 'bg-gray-50 dark:bg-navy-900 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border-2 border-transparent'
                   }`}
                 >
                   {movement.name}
@@ -148,7 +148,7 @@ const WorkoutTemplates = ({ templates, setTemplates, movements }) => {
               onChange={(e) => setEditingTemplate({ ...editingTemplate, name: e.target.value })}
             />
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Select Movements</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Select Movements</label>
               <div className="max-h-60 overflow-y-auto space-y-1">
                 {movements.map(movement => (
                   <button
@@ -156,7 +156,7 @@ const WorkoutTemplates = ({ templates, setTemplates, movements }) => {
                     onClick={() => toggleMovement(movement.id, false)}
                     className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
                       editingTemplate.movements.includes(movement.id)
-                        ? 'bg-indigo-100 text-indigo-800 border-2 border-indigo-300'
+                        ? 'bg-emerald-100 text-emerald-800 border-2 border-emerald-300'
                         : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border-2 border-transparent'
                     }`}
                   >

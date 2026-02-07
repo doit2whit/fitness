@@ -5,8 +5,15 @@ export const getWorkoutAvgDifficulty = (workout) => {
   let ratingCount = 0;
   workout.exercises.forEach(exercise => {
     if (exercise.type === 'interval') {
-      // Interval exercises store a single difficulty at the exercise level
-      if (exercise.difficulty > 0) {
+      // Interval exercises store difficulty per block (or as a single value for backward compat)
+      if (exercise.blocks && exercise.blocks.length > 0) {
+        exercise.blocks.forEach(block => {
+          if (block.difficulty > 0) {
+            totalDifficulty += block.difficulty;
+            ratingCount++;
+          }
+        });
+      } else if (exercise.difficulty > 0) {
         totalDifficulty += exercise.difficulty;
         ratingCount++;
       }

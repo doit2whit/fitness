@@ -103,7 +103,7 @@ const ActiveWorkout = ({ movements, setMovements, templates, workoutHistory, set
             workDuration: ex.workDuration,
             restDuration: ex.restDuration,
             rounds: ex.rounds,
-            difficulty: ex.difficulty || 0,
+            blocks: ex.blocks || [{ difficulty: ex.difficulty || 0, totalTime: 0 }],
             isComplete: ex.isComplete || false,
             sets: []  // empty array for backward compatibility
           };
@@ -175,7 +175,8 @@ const ActiveWorkout = ({ movements, setMovements, templates, workoutHistory, set
         workDuration: newExercise.workDuration,
         restDuration: newExercise.restDuration,
         rounds: newExercise.rounds,
-        difficulty: 0,
+        blocks: [],
+        currentBlockDifficulty: 0,
         isComplete: false
       };
     } else {
@@ -357,20 +358,20 @@ const ActiveWorkout = ({ movements, setMovements, templates, workoutHistory, set
       <div className="space-y-6">
         <Card className="p-6">
           <div className="text-center space-y-4">
-            <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto">
+            <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/40 rounded-full flex items-center justify-center mx-auto">
               <Icons.Dumbbell />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900">Start a Workout</h3>
-            <p className="text-gray-600">Begin tracking your sets and reps</p>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Start a Workout</h3>
+            <p className="text-gray-600 dark:text-gray-400">Begin tracking your sets and reps</p>
 
             <div className="flex items-center justify-center gap-2">
-              <span className="text-sm text-gray-500">Date:</span>
+              <span className="text-sm text-gray-500 dark:text-gray-400">Date:</span>
               <button
                 onClick={() => setShowDatePicker(true)}
                 className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
                   isToday
-                    ? 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'
-                    : 'bg-amber-50 border-amber-300 text-amber-800 hover:bg-amber-100'
+                    ? 'bg-gray-50 dark:bg-navy-900 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    : 'bg-amber-50 dark:bg-amber-900/20 border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200 hover:bg-amber-100'
                 }`}
               >
                 <span className="flex items-center gap-1.5">
@@ -381,7 +382,7 @@ const ActiveWorkout = ({ movements, setMovements, templates, workoutHistory, set
               {!isToday && (
                 <button
                   onClick={() => setWorkoutDate(getDateKey(new Date()))}
-                  className="text-xs text-gray-500 hover:text-gray-700 underline"
+                  className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 underline"
                 >
                   Reset to today
                 </button>
@@ -401,7 +402,7 @@ const ActiveWorkout = ({ movements, setMovements, templates, workoutHistory, set
 
         {recentWorkouts.length > 0 && (
           <div className="space-y-3">
-            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
               <Icons.History /> Recent Workouts
             </h3>
             {recentWorkouts.map(workout => (
@@ -415,7 +416,7 @@ const ActiveWorkout = ({ movements, setMovements, templates, workoutHistory, set
             {workoutHistory.length > 3 && (
               <button
                 onClick={() => setShowAllWorkouts(true)}
-                className="w-full py-3 text-center text-indigo-600 hover:text-indigo-700 font-medium hover:bg-indigo-50 rounded-lg transition-colors"
+                className="w-full py-3 text-center text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 font-medium hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"
               >
                 Show All ({workoutHistory.length} workouts)
               </button>
@@ -426,16 +427,16 @@ const ActiveWorkout = ({ movements, setMovements, templates, workoutHistory, set
         <Modal isOpen={showTemplateSelector} onClose={() => setShowTemplateSelector(false)} title="Select Template">
           <div className="space-y-2 max-h-80 overflow-y-auto">
             {templates.length === 0 ? (
-              <p className="text-gray-500 text-center py-4">No templates available. Create one first!</p>
+              <p className="text-gray-500 dark:text-gray-400 text-center py-4">No templates available. Create one first!</p>
             ) : (
               templates.map(template => (
                 <button
                   key={template.id}
                   onClick={() => startWorkout(template)}
-                  className="w-full text-left p-3 rounded-lg bg-gray-50 hover:bg-indigo-50 transition-colors"
+                  className="w-full text-left p-3 rounded-lg bg-gray-50 dark:bg-navy-900 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
                 >
-                  <div className="font-medium text-gray-900">{template.name}</div>
-                  <div className="text-sm text-gray-500">
+                  <div className="font-medium text-gray-900 dark:text-gray-100">{template.name}</div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
                     {template.movements.length} exercises
                   </div>
                 </button>
@@ -446,22 +447,22 @@ const ActiveWorkout = ({ movements, setMovements, templates, workoutHistory, set
 
         <Modal isOpen={showDatePicker} onClose={() => setShowDatePicker(false)} title="Select Workout Date">
           <div className="space-y-4">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               Select a date to log a past workout. This is useful for entering workouts you forgot to track.
             </p>
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Workout Date</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Workout Date</label>
               <input
                 type="date"
                 value={workoutDate}
                 onChange={(e) => setWorkoutDate(e.target.value)}
                 max={getDateKey(new Date())}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 dark:bg-navy-900 dark:text-gray-100"
               />
             </div>
             {!isToday && (
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                <p className="text-sm text-amber-800">
+              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
+                <p className="text-sm text-amber-800 dark:text-amber-200">
                   <strong>Backdating:</strong> This workout will be recorded for {formattedSelectedDate}.
                 </p>
               </div>
@@ -489,10 +490,10 @@ const ActiveWorkout = ({ movements, setMovements, templates, workoutHistory, set
       <Card className="p-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="font-semibold text-gray-900">{currentWorkout.templateName}</h3>
-            <p className="text-sm text-gray-500">
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100">{currentWorkout.templateName}</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               {isToday ? 'In progress' : (
-                <span className="text-amber-600">
+                <span className="text-amber-600 dark:text-amber-400">
                   Logging for {formattedSelectedDate}
                 </span>
               )}
@@ -546,13 +547,13 @@ const ActiveWorkout = ({ movements, setMovements, templates, workoutHistory, set
       <Modal isOpen={showAddExercise} onClose={() => setShowAddExercise(false)} title="Add Exercise">
         <div className="space-y-4">
           {/* Exercise type toggle */}
-          <div className="flex rounded-lg bg-gray-100 p-1">
+          <div className="flex rounded-lg bg-gray-100 dark:bg-navy-900 p-1">
             <button
               onClick={() => setNewExercise({ ...newExercise, exerciseType: 'sets' })}
               className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-md text-sm font-medium transition-colors ${
                 newExercise.exerciseType === 'sets'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? 'bg-white dark:bg-navy-800 text-gray-900 dark:text-gray-100 shadow-sm'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
             >
               <Icons.Dumbbell /> Sets
@@ -561,8 +562,8 @@ const ActiveWorkout = ({ movements, setMovements, templates, workoutHistory, set
               onClick={() => setNewExercise({ ...newExercise, exerciseType: 'interval' })}
               className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-md text-sm font-medium transition-colors ${
                 newExercise.exerciseType === 'interval'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? 'bg-white dark:bg-navy-800 text-gray-900 dark:text-gray-100 shadow-sm'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
             >
               <Icons.Interval /> Interval
@@ -571,7 +572,7 @@ const ActiveWorkout = ({ movements, setMovements, templates, workoutHistory, set
 
           {/* Exercise selector (shared) */}
           <div className="space-y-1">
-            <label className="block text-sm font-medium text-gray-700">Exercise</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Exercise</label>
             <select
               value={newExercise.movementId}
               onChange={(e) => {
@@ -590,7 +591,7 @@ const ActiveWorkout = ({ movements, setMovements, templates, workoutHistory, set
                   setNewExercise({ ...newExercise, movementId: e.target.value });
                 }
               }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white dark:bg-navy-900 dark:text-gray-100"
             >
               <option value="">Select an exercise...</option>
               {movements.map(m => (
@@ -607,7 +608,7 @@ const ActiveWorkout = ({ movements, setMovements, templates, workoutHistory, set
                 const lastData = getLastExerciseMaxWeight(newExercise.movementId, workoutHistory);
                 if (lastData) {
                   return (
-                    <div className="text-sm text-indigo-600 bg-indigo-50 rounded-lg px-3 py-2">
+                    <div className="text-sm text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg px-3 py-2">
                       Last time: {lastData.weight} {lastData.unit} for {lastData.reps} reps
                     </div>
                   );
@@ -636,13 +637,13 @@ const ActiveWorkout = ({ movements, setMovements, templates, workoutHistory, set
               />
 
               <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-700">Weight unit:</span>
+                <span className="text-sm text-gray-700 dark:text-gray-300">Weight unit:</span>
                 <button
                   onClick={() => setNewExercise({
                     ...newExercise,
                     exerciseUnit: (newExercise.exerciseUnit || settings.defaultUnit) === 'lbs' ? 'kg' : 'lbs'
                   })}
-                  className="px-3 py-1 text-sm rounded bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
+                  className="px-3 py-1 text-sm rounded bg-gray-100 dark:bg-navy-900 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 transition-colors"
                 >
                   {newExercise.exerciseUnit || settings.defaultUnit}
                 </button>
@@ -679,7 +680,7 @@ const ActiveWorkout = ({ movements, setMovements, templates, workoutHistory, set
                 max={50}
               />
 
-              <div className="text-sm text-gray-500 bg-gray-50 rounded-lg px-3 py-2">
+              <div className="text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-navy-900 rounded-lg px-3 py-2">
                 Total time: {formatTime(
                   (newExercise.workDuration * newExercise.rounds) +
                   (newExercise.restDuration * Math.max(0, newExercise.rounds - 1))
@@ -709,13 +710,13 @@ const ActiveWorkout = ({ movements, setMovements, templates, workoutHistory, set
       <Modal isOpen={showWorkoutSummary} onClose={() => {}} title="Workout Complete!" size="lg">
         {completedWorkoutData && (
           <div className="space-y-4">
-            <div className="flex items-center gap-3 bg-gray-50 rounded-lg p-4">
+            <div className="flex items-center gap-3 bg-gray-50 dark:bg-navy-900 rounded-lg p-4">
               <Icons.Timer />
               <div>
-                <div className="text-2xl font-bold text-gray-900">
+                <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                   {formatTime(completedWorkoutData.duration)}
                 </div>
-                <div className="text-sm text-gray-500">Total Duration</div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">Total Duration</div>
               </div>
               {completedWorkoutData.duration < 1800 && (
                 <span className="ml-auto text-yellow-500" title="Quick workout!">
@@ -733,20 +734,20 @@ const ActiveWorkout = ({ movements, setMovements, templates, workoutHistory, set
                 : null;
 
               return (
-                <div className="bg-gray-50 rounded-lg p-4">
+                <div className="bg-gray-50 dark:bg-navy-900 rounded-lg p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="text-2xl font-bold text-gray-900">
+                      <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                         {currentVolume.toLocaleString()} lbs
                       </div>
-                      <div className="text-sm text-gray-500">Total Volume</div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400">Total Volume</div>
                     </div>
                     {volumeChange !== null && (
                       <div className={`text-lg font-semibold ${
                         volumeChange >= 0 ? 'text-green-600' : 'text-red-600'
                       }`}>
                         {volumeChange >= 0 ? '+' : ''}{volumeChange}%
-                        <div className="text-xs text-gray-500 font-normal">vs last workout</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 font-normal">vs last workout</div>
                       </div>
                     )}
                   </div>
@@ -754,24 +755,30 @@ const ActiveWorkout = ({ movements, setMovements, templates, workoutHistory, set
               );
             })()}
 
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-gray-600 dark:text-gray-400">
               {(() => {
                 const setsExercises = completedWorkoutData.exercises.filter(ex => ex.type !== 'interval' && ex.sets.length > 0);
                 const intervalExercises = completedWorkoutData.exercises.filter(ex => ex.type === 'interval' && ex.isComplete);
                 const totalSets = setsExercises.reduce((sum, ex) => sum + ex.sets.length, 0);
                 const parts = [];
                 if (setsExercises.length > 0) parts.push(`${setsExercises.length} exercise${setsExercises.length !== 1 ? 's' : ''}, ${totalSets} sets`);
-                if (intervalExercises.length > 0) parts.push(`${intervalExercises.length} interval${intervalExercises.length !== 1 ? 's' : ''}`);
+                if (intervalExercises.length > 0) {
+                  const totalBlocks = intervalExercises.reduce((sum, ex) => sum + (ex.blocks ? ex.blocks.length : 1), 0);
+                  parts.push(totalBlocks > intervalExercises.length
+                    ? `${totalBlocks} interval blocks`
+                    : `${intervalExercises.length} interval${intervalExercises.length !== 1 ? 's' : ''}`
+                  );
+                }
                 return parts.join(', ') || 'No exercises completed';
               })()}
             </div>
 
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Notes (optional)</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Notes (optional)</label>
               <textarea
                 value={workoutNotes}
                 onChange={(e) => setWorkoutNotes(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 dark:bg-navy-900 dark:text-gray-100"
                 rows={3}
                 placeholder="How did the workout feel? Any PRs or notes..."
               />

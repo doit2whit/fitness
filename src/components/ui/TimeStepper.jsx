@@ -38,11 +38,11 @@ const TimeStepper = ({ value, onChange, min = 5, max = 600, step = 5, label }) =
 
   return (
     <div className="space-y-1">
-      {label && <label className="block text-sm font-medium text-gray-700">{label}</label>}
+      {label && <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{label}</label>}
       <div className="flex items-center gap-3">
         <button
           onClick={() => onChange(Math.max(min, value - step))}
-          className="w-12 h-12 flex items-center justify-center bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+          className="w-12 h-12 flex items-center justify-center bg-gray-100 dark:bg-navy-900 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors text-gray-700 dark:text-gray-300"
           disabled={value <= min}
         >
           <Icons.ChevronDown />
@@ -54,7 +54,7 @@ const TimeStepper = ({ value, onChange, min = 5, max = 600, step = 5, label }) =
             onChange={(e) => setEditValue(e.target.value)}
             onBlur={handleEditConfirm}
             onKeyDown={handleKeyDown}
-            className="w-20 text-center text-lg font-bold text-gray-900 border border-indigo-300 rounded-lg px-2 py-1 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+            className="w-20 text-center text-lg font-bold text-gray-900 dark:text-gray-100 border border-emerald-300 dark:border-emerald-600 rounded-lg px-2 py-1 focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white dark:bg-navy-900"
             autoFocus
             min={min}
             max={max}
@@ -63,7 +63,7 @@ const TimeStepper = ({ value, onChange, min = 5, max = 600, step = 5, label }) =
         ) : (
           <button
             onClick={handleEditStart}
-            className="w-20 text-center text-2xl font-bold text-gray-900 hover:text-indigo-600 transition-colors"
+            className="w-20 text-center text-2xl font-bold text-gray-900 dark:text-gray-100 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
             title="Click to type custom seconds"
           >
             {formatSeconds(value)}
@@ -71,7 +71,7 @@ const TimeStepper = ({ value, onChange, min = 5, max = 600, step = 5, label }) =
         )}
         <button
           onClick={() => onChange(Math.min(max, value + step))}
-          className="w-12 h-12 flex items-center justify-center bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+          className="w-12 h-12 flex items-center justify-center bg-gray-100 dark:bg-navy-900 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors text-gray-700 dark:text-gray-300"
           disabled={value >= max}
         >
           <Icons.ChevronUp />

@@ -75,18 +75,18 @@ const MovementManager = ({ movements, setMovements, bodyParts, setBodyParts }) =
     <div className="space-y-6">
       <Card className="p-4">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-gray-900">Body Parts</h3>
+          <h3 className="font-semibold text-gray-900 dark:text-gray-100">Body Parts</h3>
           <Button size="sm" onClick={() => setShowAddBodyPart(true)}>
             <Icons.Plus /> Add
           </Button>
         </div>
         <div className="flex flex-wrap gap-2">
           {bodyParts.map(part => (
-            <div key={part} className="flex items-center gap-1 bg-gray-100 rounded-full px-3 py-1">
+            <div key={part} className="flex items-center gap-1 bg-gray-100 dark:bg-navy-900 rounded-full px-3 py-1">
               <span className="text-sm">{part}</span>
               <button
                 onClick={() => handleDeleteBodyPart(part)}
-                className="text-gray-400 hover:text-red-500 ml-1"
+                className="text-gray-400 dark:text-gray-500 hover:text-red-500 ml-1"
               >
                 <Icons.X />
               </button>
@@ -97,7 +97,7 @@ const MovementManager = ({ movements, setMovements, bodyParts, setBodyParts }) =
 
       <Card className="p-4">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-gray-900">Movements</h3>
+          <h3 className="font-semibold text-gray-900 dark:text-gray-100">Movements</h3>
           <Button size="sm" onClick={() => setShowAddMovement(true)}>
             <Icons.Plus /> Add Movement
           </Button>
@@ -106,26 +106,26 @@ const MovementManager = ({ movements, setMovements, bodyParts, setBodyParts }) =
           {movements.map(movement => (
             <div
               key={movement.id}
-              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+              className="flex items-center justify-between p-3 bg-gray-50 dark:bg-navy-900 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             >
               <div>
-                <div className="font-medium text-gray-900">{movement.name}</div>
+                <div className="font-medium text-gray-900 dark:text-gray-100">{movement.name}</div>
                 <div className="flex gap-1 mt-1">
                   {movement.bodyParts.map(part => (
-                    <Badge key={part} color="indigo">{part}</Badge>
+                    <Badge key={part} color="emerald">{part}</Badge>
                   ))}
                 </div>
               </div>
               <div className="flex gap-2">
                 <button
                   onClick={() => setEditingMovement(movement)}
-                  className="text-gray-400 hover:text-indigo-600"
+                  className="text-gray-400 dark:text-gray-500 hover:text-emerald-600"
                 >
                   <Icons.Edit />
                 </button>
                 <button
                   onClick={() => handleDeleteMovement(movement.id)}
-                  className="text-gray-400 hover:text-red-600"
+                  className="text-gray-400 dark:text-gray-500 hover:text-red-600"
                 >
                   <Icons.Trash />
                 </button>
@@ -159,7 +159,7 @@ const MovementManager = ({ movements, setMovements, bodyParts, setBodyParts }) =
             placeholder="e.g., Incline Dumbbell Press"
           />
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Target Body Parts</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Target Body Parts</label>
             <div className="flex flex-wrap gap-2">
               {bodyParts.map(part => (
                 <button
@@ -167,8 +167,8 @@ const MovementManager = ({ movements, setMovements, bodyParts, setBodyParts }) =
                   onClick={() => toggleBodyPart(part, true)}
                   className={`px-3 py-1 rounded-full text-sm transition-colors ${
                     newMovement.bodyParts.includes(part)
-                      ? 'bg-indigo-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-gray-100 dark:bg-navy-900 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                   }`}
                 >
                   {part}
@@ -192,7 +192,7 @@ const MovementManager = ({ movements, setMovements, bodyParts, setBodyParts }) =
               onChange={(e) => setEditingMovement({ ...editingMovement, name: e.target.value })}
             />
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Target Body Parts</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Target Body Parts</label>
               <div className="flex flex-wrap gap-2">
                 {bodyParts.map(part => (
                   <button
@@ -200,8 +200,8 @@ const MovementManager = ({ movements, setMovements, bodyParts, setBodyParts }) =
                     onClick={() => toggleBodyPart(part, false)}
                     className={`px-3 py-1 rounded-full text-sm transition-colors ${
                       editingMovement.bodyParts.includes(part)
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-gray-100 dark:bg-navy-900 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                     }`}
                   >
                     {part}

@@ -23,6 +23,39 @@ export default function FitnessTracker() {
   const [settings, setSettings] = useLocalStorage(STORAGE_KEYS.settings, { defaultUnit: 'lbs' });
   const [lastBackupCount, setLastBackupCount] = useLocalStorage(STORAGE_KEYS.lastBackupCount, 0);
 
+  // Theme management
+  useEffect(() => {
+    const applyTheme = () => {
+      const theme = settings.theme || 'system';
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const isDark = theme === 'dark' || (theme === 'system' && prefersDark);
+
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+
+      // Update meta theme-color
+      const meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) {
+        meta.setAttribute('content', isDark ? '#0f1724' : '#059669');
+      }
+    };
+
+    applyTheme();
+
+    // Listen for system theme changes
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = () => {
+      if ((settings.theme || 'system') === 'system') {
+        applyTheme();
+      }
+    };
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, [settings.theme]);
+
   // Backup reminder state
   const [showBackupReminder, setShowBackupReminder] = useState(false);
   const [showBackupExportOptions, setShowBackupExportOptions] = useState(false);
@@ -160,14 +193,17 @@ export default function FitnessTracker() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-cream-100 dark:bg-navy-900 transition-colors duration-200">
+      {/* Gradient accent bar */}
+      <div className="h-1.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500" />
+
       <div className="max-w-4xl mx-auto px-4 py-6">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Icons.Dumbbell />
-            Fitness Tracker
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+            <span className="text-emerald-600 dark:text-emerald-400"><Icons.Dumbbell /></span>
+            Whitman Fitman
           </h1>
-          <p className="text-gray-600 text-sm mt-1">Track your workouts, monitor progress</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Track your workouts, monitor progress</p>
         </div>
 
         <div className="mb-6 overflow-x-auto">
@@ -235,13 +271,13 @@ export default function FitnessTracker() {
         title="Time to Back Up Your Data!"
       >
         <div className="space-y-4">
-          <p className="text-gray-600">
+          <p className="text-gray-600 dark:text-gray-400">
             You've logged {workoutHistory.length - lastBackupCount} new workout{workoutHistory.length - lastBackupCount !== 1 ? 's' : ''} since your last backup.
             Would you like to export your data now to keep it safe?
           </p>
 
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-            <p className="text-sm text-amber-800">
+          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
+            <p className="text-sm text-amber-800 dark:text-amber-200">
               <strong>Remember:</strong> Your workout data is stored in your browser. Clearing your browser data or switching devices will lose your history without a backup.
             </p>
           </div>
@@ -257,33 +293,33 @@ export default function FitnessTracker() {
             </div>
           ) : (
             <div className="space-y-3">
-              <p className="text-sm font-medium text-gray-700">Choose export format:</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Choose export format:</p>
               <div className="flex flex-col gap-2">
                 <button
                   onClick={handleBackupExportJSON}
-                  className="w-full text-left px-4 py-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
+                  className="w-full text-left px-4 py-3 rounded-lg bg-gray-50 dark:bg-navy-900 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                 >
-                  <div className="font-medium text-gray-900">Download as JSON</div>
-                  <div className="text-sm text-gray-500">Full backup file for restoring data later</div>
+                  <div className="font-medium text-gray-900 dark:text-gray-100">Download as JSON</div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">Full backup file for restoring data later</div>
                 </button>
                 <button
                   onClick={handleBackupExportCSV}
-                  className="w-full text-left px-4 py-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
+                  className="w-full text-left px-4 py-3 rounded-lg bg-gray-50 dark:bg-navy-900 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                 >
-                  <div className="font-medium text-gray-900">Download as CSV</div>
-                  <div className="text-sm text-gray-500">Spreadsheet format for viewing in Excel</div>
+                  <div className="font-medium text-gray-900 dark:text-gray-100">Download as CSV</div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">Spreadsheet format for viewing in Excel</div>
                 </button>
                 <button
                   onClick={handleBackupExportEmail}
-                  className="w-full text-left px-4 py-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
+                  className="w-full text-left px-4 py-3 rounded-lg bg-gray-50 dark:bg-navy-900 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                 >
-                  <div className="font-medium text-gray-900">Email backup</div>
-                  <div className="text-sm text-gray-500">Download file and compose email to send it</div>
+                  <div className="font-medium text-gray-900 dark:text-gray-100">Email backup</div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">Download file and compose email to send it</div>
                 </button>
               </div>
               <button
                 onClick={() => setShowBackupExportOptions(false)}
-                className="text-sm text-gray-500 hover:text-gray-700"
+                className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
               >
                 ← Back
               </button>

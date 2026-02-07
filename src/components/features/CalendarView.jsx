@@ -36,7 +36,7 @@ const CalendarView = ({ workoutHistory }) => {
       });
     });
 
-    if (setCount === 0) return 'bg-gray-200';
+    if (setCount === 0) return 'bg-gray-200 dark:bg-gray-700';
 
     const avgDifficulty = totalDifficulty / setCount;
 
@@ -84,14 +84,14 @@ const CalendarView = ({ workoutHistory }) => {
         <div className="flex items-center justify-between mb-4">
           <button
             onClick={() => navigateMonth(-1)}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-100 dark:hover:bg-navy-900 rounded-lg transition-colors text-gray-700 dark:text-gray-300"
           >
             <Icons.ChevronLeft />
           </button>
-          <h3 className="font-semibold text-lg text-gray-900">{monthName}</h3>
+          <h3 className="font-semibold text-lg text-gray-900 dark:text-gray-100">{monthName}</h3>
           <button
             onClick={() => navigateMonth(1)}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-100 dark:hover:bg-navy-900 rounded-lg transition-colors text-gray-700 dark:text-gray-300"
           >
             <Icons.ChevronRight />
           </button>
@@ -99,7 +99,7 @@ const CalendarView = ({ workoutHistory }) => {
 
         <div className="grid grid-cols-7 gap-1">
           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-            <div key={day} className="text-center text-xs font-medium text-gray-500 py-2">
+            <div key={day} className="text-center text-xs font-medium text-gray-500 dark:text-gray-400 py-2">
               {day}
             </div>
           ))}
@@ -118,11 +118,11 @@ const CalendarView = ({ workoutHistory }) => {
               <div
                 key={dateKey}
                 className={`aspect-square flex flex-col items-center justify-center rounded-lg text-sm transition-colors ${
-                  color || 'hover:bg-gray-100'
-                } ${isToday && !color ? 'ring-2 ring-indigo-500' : ''}`}
+                  color || 'hover:bg-gray-100 dark:hover:bg-navy-900 text-gray-900 dark:text-gray-300'
+                } ${isToday && !color ? 'ring-2 ring-emerald-500' : ''}`}
                 title={workouts ? `${workouts.length} workout(s)` : ''}
               >
-                <span className={isToday && !color ? 'font-bold text-indigo-600' : ''}>
+                <span className={isToday && !color ? 'font-bold text-emerald-600 dark:text-emerald-400' : ''}>
                   {date.getDate()}
                 </span>
                 {workouts && (
@@ -133,18 +133,18 @@ const CalendarView = ({ workoutHistory }) => {
           })}
         </div>
 
-        <div className="flex justify-center gap-6 mt-6 pt-4 border-t">
+        <div className="flex justify-center gap-6 mt-6 pt-4 border-t border-gray-100 dark:border-gray-700">
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded bg-blue-400" />
-            <span className="text-sm text-gray-600">Easy</span>
+            <span className="text-sm text-gray-600 dark:text-gray-400">Easy</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded bg-orange-400" />
-            <span className="text-sm text-gray-600">Moderate</span>
+            <span className="text-sm text-gray-600 dark:text-gray-400">Moderate</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded bg-red-500" />
-            <span className="text-sm text-gray-600">Hard</span>
+            <span className="text-sm text-gray-600 dark:text-gray-400">Hard</span>
           </div>
         </div>
       </Card>
