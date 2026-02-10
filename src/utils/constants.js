@@ -42,11 +42,18 @@ export const DEFAULT_WORK_DURATION = 30;  // seconds
 export const DEFAULT_REST_DURATION = 10;  // seconds
 export const DEFAULT_ROUNDS = 6;
 
+// Tier system for auto-progression
+export const TIER_LABELS = { 1: 'T1', 2: 'T2', 3: 'T3', 4: 'T4' };
+export const TIER_REP_THRESHOLDS = { 1: 6, 2: 10, 3: 12, 4: 15 };
+export const WEIGHT_INCREMENT = { lbs: 5, kg: 2.5 };
+
 export const STORAGE_KEYS = {
   movements: 'fitness_movements',
   bodyParts: 'fitness_bodyParts',
   workoutHistory: 'fitness_workoutHistory',
   workoutTemplates: 'fitness_workoutTemplates',
   settings: 'fitness_settings',
-  lastBackupCount: 'fitness_lastBackupCount'
+  lastBackupCount: 'fitness_lastBackupCount',
+  activeWorkout: 'fitness_activeWorkout',
+  activeWorkoutFlag: 'fitness_activeWorkout_active'
 };

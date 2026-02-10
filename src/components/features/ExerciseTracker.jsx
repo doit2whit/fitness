@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { TIER_LABELS, WEIGHT_INCREMENT } from '../../utils/constants';
 import { formatTime } from '../../utils/helpers';
 import Icons from '../icons/Icons';
 import Card from '../ui/Card';
@@ -90,8 +91,18 @@ const ExerciseTracker = ({
     <>
       <Card className={`p-4 ${exercise.isComplete ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : ''}`}>
         <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <h4 className="font-semibold text-gray-900 dark:text-gray-100">{movementName}</h4>
+            {exercise.tier && TIER_LABELS[exercise.tier] && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 font-semibold">
+                {TIER_LABELS[exercise.tier]}
+              </span>
+            )}
+            {exercise.progressed && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 font-semibold">
+                +{WEIGHT_INCREMENT[exerciseUnit] || 5} {exerciseUnit}
+              </span>
+            )}
             <button
               onClick={handleUnitToggle}
               className="text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-navy-900 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-400 transition-colors"
@@ -99,6 +110,15 @@ const ExerciseTracker = ({
             >
               {exerciseUnit}
             </button>
+            <label className="flex items-center gap-1 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={exercise.perDumbbell || false}
+                onChange={(e) => onUpdateExercise({ perDumbbell: e.target.checked })}
+                className="w-3.5 h-3.5 text-emerald-600 border-gray-300 dark:border-gray-600 rounded focus:ring-emerald-500"
+              />
+              <span className="text-xs text-gray-500 dark:text-gray-400">per DB</span>
+            </label>
           </div>
           <div className="flex items-center gap-2">
             <button

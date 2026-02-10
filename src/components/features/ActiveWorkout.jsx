@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { DEFAULT_SETS, DEFAULT_BAR_WEIGHT, DEFAULT_WORK_DURATION, DEFAULT_REST_DURATION, DEFAULT_ROUNDS } from '../../utils/constants';
 import { generateId, formatTime, getDateKey } from '../../utils/helpers';
-import { getLastExerciseData, getLastExerciseMaxWeight, calculateWorkoutVolume } from '../../utils/workoutUtils';
+import { getLastExerciseData, getLastExerciseMaxWeight, calculateWorkoutVolume, getMovementConfig, calculateAutoProgression } from '../../utils/workoutUtils';
 import useTimer from '../../hooks/useTimer';
 import Icons from '../icons/Icons';
 import Card from '../ui/Card';
@@ -17,9 +17,7 @@ import WorkoutSummaryCard from './WorkoutSummaryCard';
 import WorkoutDetailView from './WorkoutDetailView';
 import AllWorkoutsView from './AllWorkoutsView';
 
-const ActiveWorkout = ({ movements, setMovements, templates, workoutHistory, setWorkoutHistory, settings }) => {
-  const [isWorkoutActive, setIsWorkoutActive] = useState(false);
-  const [currentWorkout, setCurrentWorkout] = useState(null);
+const ActiveWorkout = ({ movements, setMovements, templates, workoutHistory, setWorkoutHistory, settings, isWorkoutActive, setIsWorkoutActive, currentWorkout, setCurrentWorkout }) => {
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
   const [showAddExercise, setShowAddExercise] = useState(false);
   const [viewingWorkout, setViewingWorkout] = useState(null);
@@ -36,6 +34,7 @@ const ActiveWorkout = ({ movements, setMovements, templates, workoutHistory, set
     barWeight: '',
     ignoreBarWeight: false,
     exerciseUnit: null,
+    perDumbbell: false,
     // Interval fields
     exerciseType: 'sets',  // 'sets' or 'interval'
     workDuration: DEFAULT_WORK_DURATION,
@@ -43,7 +42,11 @@ const ActiveWorkout = ({ movements, setMovements, templates, workoutHistory, set
     rounds: DEFAULT_ROUNDS
   });
 
-  const workoutTimer = useTimer(isWorkoutActive);
+  const getElapsedSeconds = () => {
+    if (!isWorkoutActive || !currentWorkout?.startTime) return 0;
+    return Math.floor((Date.now() - new Date(currentWorkout.startTime).getTime()) / 1000);
+  };
+  const workoutTimer = useTimer(isWorkoutActive, getElapsedSeconds());
 
   useEffect(() => {
     if (!isWorkoutActive) {
@@ -64,11 +67,34 @@ const ActiveWorkout = ({ movements, setMovements, templates, workoutHistory, set
     };
 
     if (template) {
-      workout.exercises = template.movements.map(movementId => {
-        const lastData = getLastExerciseData(movementId, workoutHistory, settings.defaultUnit);
+      workout.exercises = template.movements.map(movementEntry => {
+        const config = getMovementConfig(movementEntry);
+
+        if (config.type === 'interval') {
+          return {
+            movementId: config.movementId,
+            type: 'interval',
+            workDuration: config.workDuration || DEFAULT_WORK_DURATION,
+            restDuration: config.restDuration || DEFAULT_REST_DURATION,
+            rounds: config.rounds || DEFAULT_ROUNDS,
+            blocks: [],
+            currentBlockDifficulty: 0,
+            isComplete: false
+          };
+        }
+
+        const exerciseUnit = config.unit || settings.defaultUnit;
+        const lastData = config.tier
+          ? calculateAutoProgression(config.movementId, config.tier, exerciseUnit, template.id, workoutHistory, settings.defaultUnit)
+          : getLastExerciseData(config.movementId, workoutHistory, settings.defaultUnit);
+        const numSets = config.sets || lastData.sets || DEFAULT_SETS;
         return {
-          movementId,
-          plannedSets: Array.from({ length: lastData.sets }, () => ({
+          movementId: config.movementId,
+          unit: exerciseUnit,
+          perDumbbell: lastData.perDumbbell || false,
+          progressed: lastData.progressed || false,
+          tier: config.tier || null,
+          plannedSets: Array.from({ length: numSets }, () => ({
             weight: lastData.weight,
             reps: null,
             difficulty: 0
@@ -105,6 +131,10 @@ const ActiveWorkout = ({ movements, setMovements, templates, workoutHistory, set
             rounds: ex.rounds,
             blocks: ex.blocks || [{ difficulty: ex.difficulty || 0, totalTime: 0 }],
             isComplete: ex.isComplete || false,
+            weighted: ex.weighted || false,
+            weight: ex.weighted ? (ex.weight || null) : null,
+            unit: ex.unit || settings.defaultUnit,
+            perDumbbell: ex.perDumbbell || false,
             sets: []  // empty array for backward compatibility
           };
         }
@@ -113,6 +143,7 @@ const ActiveWorkout = ({ movements, setMovements, templates, workoutHistory, set
           movementId: ex.movementId,
           unit: ex.unit || settings.defaultUnit,
           completionTime: ex.completionTime || null,
+          perDumbbell: ex.perDumbbell || false,
           sets: ex.plannedSets
             .filter(s => s.reps !== null && s.reps !== undefined && s.reps > 0)
             .map(s => ({
@@ -177,7 +208,8 @@ const ActiveWorkout = ({ movements, setMovements, templates, workoutHistory, set
         rounds: newExercise.rounds,
         blocks: [],
         currentBlockDifficulty: 0,
-        isComplete: false
+        isComplete: false,
+        perDumbbell: newExercise.perDumbbell
       };
     } else {
       // Sets-based exercise (existing behavior)
@@ -199,6 +231,7 @@ const ActiveWorkout = ({ movements, setMovements, templates, workoutHistory, set
       exercise = {
         movementId: newExercise.movementId,
         unit: exerciseUnit,
+        perDumbbell: newExercise.perDumbbell,
         plannedSets: Array.from({ length: newExercise.plannedSets }, () => ({
           weight: totalWeight,
           reps: null,
@@ -221,6 +254,7 @@ const ActiveWorkout = ({ movements, setMovements, templates, workoutHistory, set
       barWeight: '',
       ignoreBarWeight: false,
       exerciseUnit: null,
+      perDumbbell: false,
       exerciseType: 'sets',
       workDuration: DEFAULT_WORK_DURATION,
       restDuration: DEFAULT_REST_DURATION,
@@ -518,6 +552,7 @@ const ActiveWorkout = ({ movements, setMovements, templates, workoutHistory, set
               movementName={getMovementName(exercise.movementId)}
               onUpdateExercise={(updates) => updateExercise(exIndex, updates)}
               onRemoveExercise={() => removeExercise(exIndex)}
+              defaultUnit={settings.defaultUnit}
             />
           ) : (
             <ExerciseTracker
@@ -609,7 +644,7 @@ const ActiveWorkout = ({ movements, setMovements, templates, workoutHistory, set
                 if (lastData) {
                   return (
                     <div className="text-sm text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg px-3 py-2">
-                      Last time: {lastData.weight} {lastData.unit} for {lastData.reps} reps
+                      Last time: {lastData.weight} {lastData.unit}{lastData.perDumbbell ? ' (per DB)' : ''} for {lastData.reps} reps
                     </div>
                   );
                 }

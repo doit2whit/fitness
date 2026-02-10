@@ -16,6 +16,9 @@ const Tabs = ({ tabs, activeTab, onChange }) => (
           <span className="flex items-center justify-center gap-1.5">
             {tab.icon}
             {tab.label}
+            {tab.showDot && activeTab !== tab.id && (
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            )}
           </span>
         </button>
       ))}
