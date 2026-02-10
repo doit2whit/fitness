@@ -1,5 +1,5 @@
 import React from 'react';
-import { DIFFICULTY_LEVELS } from '../../utils/constants';
+import { DIFFICULTY_LEVELS, DEFAULT_BAR_WEIGHT } from '../../utils/constants';
 import { formatTime } from '../../utils/helpers';
 import useIntervalTimer from '../../hooks/useIntervalTimer';
 import useWakeLock from '../../hooks/useWakeLock';
@@ -8,7 +8,7 @@ import Card from '../ui/Card';
 import Button from '../ui/Button';
 import ConfirmDialog from '../ui/ConfirmDialog';
 
-const IntervalTracker = ({ exercise, movementName, onUpdateExercise, onRemoveExercise }) => {
+const IntervalTracker = ({ exercise, movementName, onUpdateExercise, onRemoveExercise, defaultUnit }) => {
   const [showRemoveConfirm, setShowRemoveConfirm] = React.useState(false);
 
   const timer = useIntervalTimer({
@@ -131,10 +131,107 @@ const IntervalTracker = ({ exercise, movementName, onUpdateExercise, onRemoveExe
       </div>
 
       {/* Config summary */}
-      <div className="flex gap-4 text-sm text-gray-500 dark:text-gray-400 mb-4">
+      <div className="flex gap-4 text-sm text-gray-500 dark:text-gray-400 mb-3">
         <span>{exercise.rounds} rounds</span>
         <span>{formatTime(exercise.workDuration)} work</span>
         <span>{formatTime(exercise.restDuration)} rest</span>
+      </div>
+
+      {/* Weighted movement toggle + weight entry */}
+      <div className="mb-4 space-y-2">
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={exercise.weighted || false}
+            onChange={(e) => onUpdateExercise({ weighted: e.target.checked })}
+            className="w-4 h-4 text-emerald-600 border-gray-300 dark:border-gray-600 rounded focus:ring-emerald-500"
+          />
+          <span className="text-sm text-gray-700 dark:text-gray-300">Weighted movement</span>
+        </label>
+
+        {exercise.weighted && (
+          <div className="ml-6 space-y-2 bg-gray-50 dark:bg-navy-900 rounded-lg p-3">
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                value={exercise.weight || ''}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  onUpdateExercise({ weight: val === '' ? null : parseFloat(val) });
+                }}
+                className="w-24 px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500 dark:bg-navy-800 dark:text-gray-100"
+                placeholder="Weight"
+                min="0"
+                step="2.5"
+              />
+              <button
+                onClick={() => {
+                  const currentUnit = exercise.unit || defaultUnit || 'lbs';
+                  onUpdateExercise({ unit: currentUnit === 'lbs' ? 'kg' : 'lbs' });
+                }}
+                className="px-2 py-1.5 text-xs rounded bg-gray-100 dark:bg-navy-800 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-400 transition-colors"
+              >
+                {exercise.unit || defaultUnit || 'lbs'}
+              </button>
+              <label className="flex items-center gap-1 cursor-pointer ml-2">
+                <input
+                  type="checkbox"
+                  checked={exercise.perDumbbell || false}
+                  onChange={(e) => onUpdateExercise({ perDumbbell: e.target.checked })}
+                  className="w-3.5 h-3.5 text-emerald-600 border-gray-300 dark:border-gray-600 rounded focus:ring-emerald-500"
+                />
+                <span className="text-xs text-gray-500 dark:text-gray-400">per DB</span>
+              </label>
+            </div>
+
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={exercise.isOneSide || false}
+                onChange={(e) => onUpdateExercise({ isOneSide: e.target.checked })}
+                className="w-3.5 h-3.5 text-emerald-600 border-gray-300 dark:border-gray-600 rounded focus:ring-emerald-500"
+              />
+              <span className="text-xs text-gray-700 dark:text-gray-300">One-side entry</span>
+            </label>
+
+            {exercise.isOneSide && (
+              <>
+                <label className="flex items-center gap-2 cursor-pointer ml-4">
+                  <input
+                    type="checkbox"
+                    checked={exercise.ignoreBarWeight || false}
+                    onChange={(e) => onUpdateExercise({ ignoreBarWeight: e.target.checked })}
+                    className="w-3.5 h-3.5 text-emerald-600 border-gray-300 dark:border-gray-600 rounded focus:ring-emerald-500"
+                  />
+                  <span className="text-xs text-gray-700 dark:text-gray-300">Ignore bar weight</span>
+                </label>
+                {!exercise.ignoreBarWeight && (
+                  <div className="flex items-center gap-2 ml-4">
+                    <span className="text-xs text-gray-500 dark:text-gray-400">Bar:</span>
+                    <input
+                      type="number"
+                      value={exercise.barWeight || ''}
+                      onChange={(e) => onUpdateExercise({ barWeight: e.target.value === '' ? null : parseFloat(e.target.value) })}
+                      className="w-16 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded dark:bg-navy-800 dark:text-gray-100"
+                      placeholder={DEFAULT_BAR_WEIGHT[exercise.unit || defaultUnit || 'lbs']}
+                    />
+                    <span className="text-xs text-gray-500 dark:text-gray-400">{exercise.unit || defaultUnit || 'lbs'}</span>
+                  </div>
+                )}
+                {exercise.weight && (
+                  <div className="text-xs text-emerald-600 dark:text-emerald-400 font-medium ml-4">
+                    Total: {(() => {
+                      const sideWeight = exercise.weight || 0;
+                      if (exercise.ignoreBarWeight) return sideWeight * 2;
+                      const bar = exercise.barWeight || DEFAULT_BAR_WEIGHT[exercise.unit || defaultUnit || 'lbs'];
+                      return (sideWeight * 2) + bar;
+                    })()} {exercise.unit || defaultUnit || 'lbs'}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Completed blocks — shown faded to the left */}

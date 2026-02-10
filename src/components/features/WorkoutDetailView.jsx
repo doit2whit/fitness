@@ -152,6 +152,12 @@ const WorkoutDetailView = ({ workout, movements, onBack, onUpdateWorkout }) => {
                   <span className="text-emerald-700 dark:text-emerald-300 font-medium">
                     {exercise.rounds} rounds × {formatTime(exercise.workDuration)} work / {formatTime(exercise.restDuration)} rest
                   </span>
+                  {exercise.weighted && exercise.weight && (
+                    <span className="text-emerald-600 dark:text-emerald-400 ml-2">
+                      — {exercise.weight} {exercise.unit || workout.unit}
+                      {exercise.perDumbbell && <span className="text-xs opacity-75 ml-1">per DB</span>}
+                    </span>
+                  )}
                 </div>
                 {blocks.length > 0 && (
                   <div className="space-y-1.5">
@@ -227,7 +233,10 @@ const WorkoutDetailView = ({ workout, movements, onBack, onUpdateWorkout }) => {
                     <div key={setIndex} className="flex items-center justify-between bg-gray-50 dark:bg-navy-900 rounded-lg px-3 py-2">
                       <div className="flex items-center gap-4">
                         <span className="text-sm font-medium text-gray-500 dark:text-gray-400 w-12">Set {setIndex + 1}</span>
-                        <span className="font-medium">{set.weight} {set.unit || workout.unit}</span>
+                        <span className="font-medium">
+                          {set.weight} {set.unit || workout.unit}
+                          {exercise.perDumbbell && <span className="text-xs text-gray-400 dark:text-gray-500 ml-1">per DB</span>}
+                        </span>
                         <span className="text-gray-600 dark:text-gray-400">× {set.reps} reps</span>
                         {set.restTime && (
                           <span className="text-xs text-gray-400 dark:text-gray-500">

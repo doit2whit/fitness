@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { STORAGE_KEYS, DEFAULT_MOVEMENTS, DEFAULT_BODY_PARTS, DIFFICULTY_LEVELS } from './utils/constants';
+import { migrateTemplate } from './utils/workoutUtils';
 import { getDateKey } from './utils/helpers';
 import useLocalStorage from './hooks/useLocalStorage';
 import Icons from './components/icons/Icons';
@@ -22,6 +23,8 @@ export default function FitnessTracker() {
   const [templates, setTemplates] = useLocalStorage(STORAGE_KEYS.workoutTemplates, []);
   const [settings, setSettings] = useLocalStorage(STORAGE_KEYS.settings, { defaultUnit: 'lbs' });
   const [lastBackupCount, setLastBackupCount] = useLocalStorage(STORAGE_KEYS.lastBackupCount, 0);
+  const [isWorkoutActive, setIsWorkoutActive] = useLocalStorage(STORAGE_KEYS.activeWorkoutFlag, false);
+  const [currentWorkout, setCurrentWorkout] = useLocalStorage(STORAGE_KEYS.activeWorkout, null);
 
   // Theme management
   useEffect(() => {
@@ -55,6 +58,16 @@ export default function FitnessTracker() {
     mediaQuery.addEventListener('change', handleChange);
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, [settings.theme]);
+
+  // Migrate old template format (string IDs → config objects) on first load
+  useEffect(() => {
+    if (templates.length === 0) return;
+    const migrated = templates.map(migrateTemplate);
+    const needsMigration = migrated.some((t, i) => t !== templates[i]);
+    if (needsMigration) {
+      setTemplates(migrated);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Backup reminder state
   const [showBackupReminder, setShowBackupReminder] = useState(false);
@@ -184,7 +197,7 @@ export default function FitnessTracker() {
   };
 
   const tabs = [
-    { id: 'workout', label: 'Workout', icon: <Icons.Play /> },
+    { id: 'workout', label: 'Workout', icon: <Icons.Play />, showDot: isWorkoutActive },
     { id: 'movements', label: 'Exercises', icon: <Icons.Dumbbell /> },
     { id: 'templates', label: 'Templates', icon: <Icons.Edit /> },
     { id: 'trends', label: 'Trends', icon: <Icons.Chart /> },
@@ -219,6 +232,10 @@ export default function FitnessTracker() {
               workoutHistory={workoutHistory}
               setWorkoutHistory={setWorkoutHistory}
               settings={settings}
+              isWorkoutActive={isWorkoutActive}
+              setIsWorkoutActive={setIsWorkoutActive}
+              currentWorkout={currentWorkout}
+              setCurrentWorkout={setCurrentWorkout}
             />
           )}
 
@@ -236,6 +253,7 @@ export default function FitnessTracker() {
               templates={templates}
               setTemplates={setTemplates}
               movements={movements}
+              settings={settings}
             />
           )}
 

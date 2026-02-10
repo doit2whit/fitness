@@ -7,7 +7,8 @@ const Badge = ({ children, color = 'gray' }) => {
     green: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
     red: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
     orange: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
-    indigo: 'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300'
+    indigo: 'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300',
+    purple: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300'
   };
 
   return (

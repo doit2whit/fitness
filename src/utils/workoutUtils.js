@@ -1,4 +1,4 @@
-import { DEFAULT_WEIGHT, DEFAULT_SETS } from './constants';
+import { DEFAULT_WEIGHT, DEFAULT_SETS, TIER_REP_THRESHOLDS, WEIGHT_INCREMENT } from './constants';
 
 export const getWorkoutAvgDifficulty = (workout) => {
   let totalDifficulty = 0;
@@ -45,10 +45,10 @@ export const getLastExerciseData = (movementId, workoutHistory, defaultUnit) => 
     if (exercise && exercise.sets.length > 0) {
       const lastWeight = exercise.sets[0].weight;
       const lastSets = exercise.sets.length;
-      return { weight: lastWeight, sets: lastSets };
+      return { weight: lastWeight, sets: lastSets, perDumbbell: exercise.perDumbbell || false };
     }
   }
-  return { weight: DEFAULT_WEIGHT, sets: DEFAULT_SETS };
+  return { weight: DEFAULT_WEIGHT, sets: DEFAULT_SETS, perDumbbell: false };
 };
 
 export const getLastExerciseMaxWeight = (movementId, workoutHistory) => {
@@ -63,7 +63,7 @@ export const getLastExerciseMaxWeight = (movementId, workoutHistory) => {
           repsAtMax = set.reps;
         }
       });
-      return { weight: maxWeight, reps: repsAtMax, unit: workout.unit || 'lbs' };
+      return { weight: maxWeight, reps: repsAtMax, unit: workout.unit || 'lbs', perDumbbell: exercise.perDumbbell || false };
     }
   }
   return null;
@@ -88,4 +88,79 @@ export const calculateIntervalDuration = (exercise) => {
   const { workDuration = 0, restDuration = 0, rounds = 0 } = exercise;
   // Work for every round, rest between rounds (not after the last one)
   return (workDuration * rounds) + (restDuration * Math.max(0, rounds - 1));
+};
+
+// Migrate old template format (movement ID strings) to new config objects
+export const migrateTemplate = (template) => {
+  if (!template.movements || template.movements.length === 0) return template;
+  // Already new format — movements[0] is an object with movementId
+  if (typeof template.movements[0] === 'object' && template.movements[0].movementId) {
+    return template;
+  }
+  // Old format — convert string IDs to config objects
+  return {
+    ...template,
+    movements: template.movements.map(movementId => ({
+      movementId,
+      type: 'sets',
+      sets: null,
+      unit: null,
+      tier: null,
+      workDuration: null,
+      restDuration: null,
+      rounds: null
+    }))
+  };
+};
+
+// Calculate auto-progression weight for a tiered movement
+export const calculateAutoProgression = (movementId, tier, unit, templateId, workoutHistory, defaultUnit) => {
+  const fallback = getLastExerciseData(movementId, workoutHistory, defaultUnit);
+
+  // No tier = no auto-progression, just use last weight
+  if (!tier) return { ...fallback, progressed: false };
+
+  const repThreshold = TIER_REP_THRESHOLDS[tier];
+  if (!repThreshold) return { ...fallback, progressed: false };
+
+  // Find most recent workout with matching templateId
+  const lastTemplateWorkout = workoutHistory.find(w => w.templateId === templateId);
+
+  if (!lastTemplateWorkout) {
+    // No previous use of this template — fall back to any historical use
+    return { ...fallback, progressed: false };
+  }
+
+  const exercise = lastTemplateWorkout.exercises.find(ex => ex.movementId === movementId);
+  if (!exercise || !exercise.sets || exercise.sets.length === 0) {
+    return { ...fallback, progressed: false };
+  }
+
+  const lastWeight = exercise.sets[0].weight;
+  const lastSets = exercise.sets.length;
+  const perDumbbell = exercise.perDumbbell || false;
+
+  // Check if ALL sets met the rep threshold
+  const allSetsMet = exercise.sets.every(set => set.reps >= repThreshold);
+  const increment = WEIGHT_INCREMENT[unit] || WEIGHT_INCREMENT['lbs'];
+
+  if (allSetsMet) {
+    return {
+      weight: lastWeight + increment,
+      sets: lastSets,
+      perDumbbell,
+      progressed: true,
+      previousWeight: lastWeight
+    };
+  }
+
+  return { weight: lastWeight, sets: lastSets, perDumbbell, progressed: false };
+};
+
+// Helper to safely read a movement config (handles both old and new format)
+export const getMovementConfig = (movementEntry) => {
+  if (typeof movementEntry === 'string') {
+    return { movementId: movementEntry, type: 'sets', sets: null, unit: null, tier: null };
+  }
+  return movementEntry;
 };
