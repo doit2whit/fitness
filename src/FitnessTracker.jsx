@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { STORAGE_KEYS, DEFAULT_MOVEMENTS, DEFAULT_BODY_PARTS, DIFFICULTY_LEVELS } from './utils/constants';
+import { STORAGE_KEYS, DEFAULT_MOVEMENTS, DEFAULT_BODY_PARTS, DEFAULT_TEMPLATES, DIFFICULTY_LEVELS } from './utils/constants';
 import { migrateTemplate } from './utils/workoutUtils';
 import { getDateKey } from './utils/helpers';
 import useLocalStorage from './hooks/useLocalStorage';
@@ -20,11 +20,12 @@ export default function FitnessTracker() {
   const [movements, setMovements] = useLocalStorage(STORAGE_KEYS.movements, DEFAULT_MOVEMENTS);
   const [bodyParts, setBodyParts] = useLocalStorage(STORAGE_KEYS.bodyParts, DEFAULT_BODY_PARTS);
   const [workoutHistory, setWorkoutHistory] = useLocalStorage(STORAGE_KEYS.workoutHistory, []);
-  const [templates, setTemplates] = useLocalStorage(STORAGE_KEYS.workoutTemplates, []);
+  const [templates, setTemplates] = useLocalStorage(STORAGE_KEYS.workoutTemplates, DEFAULT_TEMPLATES);
   const [settings, setSettings] = useLocalStorage(STORAGE_KEYS.settings, { defaultUnit: 'lbs' });
   const [lastBackupCount, setLastBackupCount] = useLocalStorage(STORAGE_KEYS.lastBackupCount, 0);
   const [isWorkoutActive, setIsWorkoutActive] = useLocalStorage(STORAGE_KEYS.activeWorkoutFlag, false);
   const [currentWorkout, setCurrentWorkout] = useLocalStorage(STORAGE_KEYS.activeWorkout, null);
+  const [deletedDefaultTemplates, setDeletedDefaultTemplates] = useLocalStorage(STORAGE_KEYS.deletedDefaultTemplates, []);
 
   // Theme management
   useEffect(() => {
@@ -67,6 +68,26 @@ export default function FitnessTracker() {
     if (needsMigration) {
       setTemplates(migrated);
     }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Merge default movements and templates for existing users
+  useEffect(() => {
+    // Add any new default movements not already in the user's list
+    setMovements(prev => {
+      const existingNames = new Set(prev.map(m => m.name.toLowerCase()));
+      const newMovements = DEFAULT_MOVEMENTS.filter(m => !existingNames.has(m.name.toLowerCase()));
+      return newMovements.length > 0 ? [...prev, ...newMovements] : prev;
+    });
+
+    // Add any new default templates not already in the user's list (and not previously deleted)
+    const deletedIds = new Set(deletedDefaultTemplates);
+    setTemplates(prev => {
+      const existingNames = new Set(prev.map(t => t.name.toLowerCase()));
+      const newTemplates = DEFAULT_TEMPLATES.filter(t =>
+        !existingNames.has(t.name.toLowerCase()) && !deletedIds.has(t.id)
+      );
+      return newTemplates.length > 0 ? [...prev, ...newTemplates] : prev;
+    });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Backup reminder state
@@ -254,6 +275,8 @@ export default function FitnessTracker() {
               setTemplates={setTemplates}
               movements={movements}
               settings={settings}
+              deletedDefaultTemplates={deletedDefaultTemplates}
+              setDeletedDefaultTemplates={setDeletedDefaultTemplates}
             />
           )}
 

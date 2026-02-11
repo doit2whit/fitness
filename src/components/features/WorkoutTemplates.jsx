@@ -170,7 +170,7 @@ const MovementConfig = ({ config, movementName, onUpdate, defaultUnit }) => {
   );
 };
 
-const WorkoutTemplates = ({ templates, setTemplates, movements, settings }) => {
+const WorkoutTemplates = ({ templates, setTemplates, movements, settings, deletedDefaultTemplates, setDeletedDefaultTemplates }) => {
   const [showCreateTemplate, setShowCreateTemplate] = useState(false);
   const [newTemplate, setNewTemplate] = useState({ name: '', movements: [] });
   const [editingTemplate, setEditingTemplate] = useState(null);
@@ -205,6 +205,10 @@ const WorkoutTemplates = ({ templates, setTemplates, movements, settings }) => {
   };
 
   const handleDeleteTemplate = (id) => {
+    // Track deleted default templates so they don't re-appear on reload
+    if (id.startsWith('default_')) {
+      setDeletedDefaultTemplates([...deletedDefaultTemplates, id]);
+    }
     setTemplates(templates.filter(t => t.id !== id));
   };
 

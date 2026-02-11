@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TIER_LABELS, WEIGHT_INCREMENT } from '../../utils/constants';
+import { TIER_LABELS, TIER_REP_THRESHOLDS, WEIGHT_INCREMENT } from '../../utils/constants';
 import { formatTime } from '../../utils/helpers';
 import Icons from '../icons/Icons';
 import Card from '../ui/Card';
@@ -95,7 +95,7 @@ const ExerciseTracker = ({
             <h4 className="font-semibold text-gray-900 dark:text-gray-100">{movementName}</h4>
             {exercise.tier && TIER_LABELS[exercise.tier] && (
               <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 font-semibold">
-                {TIER_LABELS[exercise.tier]}
+                {TIER_LABELS[exercise.tier]} | Goal: {TIER_REP_THRESHOLDS[exercise.tier]} reps
               </span>
             )}
             {exercise.progressed && (
