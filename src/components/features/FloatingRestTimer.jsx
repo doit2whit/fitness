@@ -1,8 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { formatTime } from '../../utils/helpers';
 
+/**
+ * @typedef {object} FloatingRestTimerProps
+ * @property {number | null} [lastSetRepStartTime] - epoch ms from the previous set's first rep; timer measures rest since then
+ */
+
+/** @param {FloatingRestTimerProps} props */
 const FloatingRestTimer = ({ lastSetRepStartTime }) => {
-  const [liveTime, setLiveTime] = useState(null);
+  /** @type {[number | null, import('react').Dispatch<import('react').SetStateAction<number | null>>]} */
+  const [liveTime, setLiveTime] = useState(/** @type {number | null} */ (null));
 
   useEffect(() => {
     if (lastSetRepStartTime) {

@@ -17,15 +17,15 @@ import SettingsView from './components/features/SettingsView';
 export default function FitnessTracker() {
   const [activeTab, setActiveTab] = useState('workout');
 
-  const [movements, setMovements] = useLocalStorage(STORAGE_KEYS.movements, DEFAULT_MOVEMENTS);
-  const [bodyParts, setBodyParts] = useLocalStorage(STORAGE_KEYS.bodyParts, DEFAULT_BODY_PARTS);
-  const [workoutHistory, setWorkoutHistory] = useLocalStorage(STORAGE_KEYS.workoutHistory, []);
-  const [templates, setTemplates] = useLocalStorage(STORAGE_KEYS.workoutTemplates, DEFAULT_TEMPLATES);
-  const [settings, setSettings] = useLocalStorage(STORAGE_KEYS.settings, { defaultUnit: 'lbs' });
+  const [movements, setMovements] = useLocalStorage(STORAGE_KEYS.movements, /** @type {import('./types').Movement[]} */ (DEFAULT_MOVEMENTS));
+  const [bodyParts, setBodyParts] = useLocalStorage(STORAGE_KEYS.bodyParts, /** @type {string[]} */ (DEFAULT_BODY_PARTS));
+  const [workoutHistory, setWorkoutHistory] = useLocalStorage(STORAGE_KEYS.workoutHistory, /** @type {import('./types').HistoryWorkout[]} */ ([]));
+  const [templates, setTemplates] = useLocalStorage(STORAGE_KEYS.workoutTemplates, /** @type {import('./types').Template[]} */ (DEFAULT_TEMPLATES));
+  const [settings, setSettings] = useLocalStorage(STORAGE_KEYS.settings, /** @type {import('./types').Settings} */ ({ defaultUnit: 'lbs' }));
   const [lastBackupCount, setLastBackupCount] = useLocalStorage(STORAGE_KEYS.lastBackupCount, 0);
   const [isWorkoutActive, setIsWorkoutActive] = useLocalStorage(STORAGE_KEYS.activeWorkoutFlag, false);
-  const [currentWorkout, setCurrentWorkout] = useLocalStorage(STORAGE_KEYS.activeWorkout, null);
-  const [deletedDefaultTemplates, setDeletedDefaultTemplates] = useLocalStorage(STORAGE_KEYS.deletedDefaultTemplates, []);
+  const [currentWorkout, setCurrentWorkout] = useLocalStorage(STORAGE_KEYS.activeWorkout, /** @type {import('./types').ActiveWorkout | null} */ (null));
+  const [deletedDefaultTemplates, setDeletedDefaultTemplates] = useLocalStorage(STORAGE_KEYS.deletedDefaultTemplates, /** @type {string[]} */ ([]));
 
   // Theme management
   useEffect(() => {

@@ -1,6 +1,16 @@
 import React from 'react';
 import Button from './Button';
 
+/**
+ * @typedef {object} ConfirmDialogProps
+ * @property {boolean} isOpen
+ * @property {() => void} onClose
+ * @property {() => void} onConfirm
+ * @property {string} title
+ * @property {string} message
+ */
+
+/** @param {ConfirmDialogProps} props */
 const ConfirmDialog = ({ isOpen, onClose, onConfirm, title, message }) => {
   if (!isOpen) return null;
 

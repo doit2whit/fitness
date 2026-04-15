@@ -1,6 +1,15 @@
 import React from 'react';
 import Icons from '../icons/Icons';
 
+/**
+ * @typedef {object} TimerDisplayProps
+ * @property {string} label
+ * @property {string} time - pre-formatted duration, e.g. "12:34"
+ * @property {boolean} [isRunning]
+ * @property {() => void} [onReset]
+ */
+
+/** @param {TimerDisplayProps} props */
 const TimerDisplay = ({ label, time, isRunning, onReset }) => (
   <div className="flex items-center gap-3 bg-gray-50 dark:bg-navy-900 rounded-lg px-4 py-2">
     <Icons.Timer />

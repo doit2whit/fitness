@@ -1,5 +1,22 @@
 import React from 'react';
 
+/**
+ * @typedef {object} SelectOption
+ * @property {string | number} value
+ * @property {string} label
+ * @property {boolean} [disabled]
+ */
+
+/**
+ * @typedef {object} SelectProps
+ * @property {string} [label]
+ * @property {SelectOption[]} options
+ * @property {string | number} value
+ * @property {import('react').ChangeEventHandler<HTMLSelectElement>} onChange
+ * @property {string} [className]
+ */
+
+/** @param {SelectProps} props */
 const Select = ({ label, options, value, onChange, className = '' }) => (
   <div className="space-y-1">
     {label && <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{label}</label>}

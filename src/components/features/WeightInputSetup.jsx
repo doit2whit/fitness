@@ -2,6 +2,20 @@ import React, { useMemo } from 'react';
 import { DEFAULT_BAR_WEIGHT } from '../../utils/constants';
 import Input from '../ui/Input';
 
+/**
+ * @typedef {object} WeightInputSetupProps
+ * @property {string | number} value - current weight input (string because it comes from an input element)
+ * @property {(next: string) => void} onChange
+ * @property {import('../../types').Unit} unit
+ * @property {boolean} isOneSide
+ * @property {(next: boolean) => void} onOneSideChange
+ * @property {string | number} [barWeight]
+ * @property {(next: string) => void} onBarWeightChange
+ * @property {boolean} ignoreBarWeight
+ * @property {(next: boolean) => void} onIgnoreBarWeightChange
+ */
+
+/** @param {WeightInputSetupProps} props */
 const WeightInputSetup = ({ value, onChange, unit, isOneSide, onOneSideChange, barWeight, onBarWeightChange, ignoreBarWeight, onIgnoreBarWeightChange }) => {
   const calculatedTotal = useMemo(() => {
     if (!isOneSide || !value) return value;

@@ -7,9 +7,22 @@ import Card from '../ui/Card';
 import Button from '../ui/Button';
 import Select from '../ui/Select';
 
+/**
+ * @typedef {object} SettingsViewProps
+ * @property {import('../../types').Settings} settings
+ * @property {import('react').Dispatch<import('react').SetStateAction<import('../../types').Settings>>} setSettings
+ * @property {import('../../types').HistoryWorkout[]} workoutHistory
+ * @property {import('../../types').Movement[]} movements
+ * @property {string[]} bodyParts
+ * @property {import('../../types').Template[]} templates
+ */
+
+/** @param {SettingsViewProps} props */
 const SettingsView = ({ settings, setSettings, workoutHistory, movements, bodyParts, templates }) => {
+  /** @type {import('react').MutableRefObject<HTMLInputElement | null>} */
   const fileInputRef = useRef(null);
-  const [importStatus, setImportStatus] = useState(null);
+  /** @type {[{ success: boolean, message: string } | null, import('react').Dispatch<any>]} */
+  const [importStatus, setImportStatus] = useState(/** @type {{ success: boolean, message: string } | null} */ (null));
   const [showExportOptions, setShowExportOptions] = useState(false);
 
   const currentTheme = settings.theme || 'system';
@@ -118,6 +131,7 @@ const SettingsView = ({ settings, setSettings, workoutHistory, movements, bodyPa
     setShowExportOptions(false);
   };
 
+  /** @param {import('react').ChangeEvent<HTMLInputElement>} event */
   const handleImport = (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -125,7 +139,7 @@ const SettingsView = ({ settings, setSettings, workoutHistory, movements, bodyPa
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
-        const data = JSON.parse(e.target?.result);
+        const data = JSON.parse(/** @type {string} */ (e.target?.result));
 
         if (data.settings) saveToStorage(STORAGE_KEYS.settings, data.settings);
         if (data.movements) saveToStorage(STORAGE_KEYS.movements, data.movements);

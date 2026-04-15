@@ -1,9 +1,20 @@
 import React from 'react';
 import Icons from '../icons/Icons';
 
+/**
+ * @typedef {object} ModalProps
+ * @property {boolean} isOpen
+ * @property {() => void} onClose
+ * @property {string} title
+ * @property {import('react').ReactNode} [children]
+ * @property {'sm' | 'md' | 'lg' | 'xl'} [size]
+ */
+
+/** @param {ModalProps} props */
 const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
   if (!isOpen) return null;
 
+  /** @type {Record<NonNullable<ModalProps['size']>, string>} */
   const sizes = {
     sm: 'max-w-sm',
     md: 'max-w-lg',

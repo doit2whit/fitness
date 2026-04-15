@@ -3,6 +3,23 @@ import { DIFFICULTY_LEVELS } from '../../utils/constants';
 import { formatTime } from '../../utils/helpers';
 import useLongPress from '../../hooks/useLongPress';
 
+/**
+ * @typedef {object} SetCircleProps
+ * @property {number} setIndex - zero-indexed set number
+ * @property {number} weight
+ * @property {number | null} reps
+ * @property {import('../../types').Difficulty} difficulty
+ * @property {number | null | undefined} [restTime] - seconds
+ * @property {boolean} [isGo]
+ * @property {number | null} [prevSetRepStartTime] - epoch ms; drives live rest timer
+ * @property {() => void} onWeightClick
+ * @property {() => void} onCircleClick
+ * @property {() => void} onCircleLongPress
+ * @property {() => void} onDifficultyClick
+ * @property {import('../../types').Unit} unit
+ */
+
+/** @param {SetCircleProps} props */
 const SetCircle = ({
   setIndex,
   weight,
@@ -19,7 +36,8 @@ const SetCircle = ({
 }) => {
   const longPressHandlers = useLongPress(onCircleLongPress, 3000);
   const difficultyLevel = DIFFICULTY_LEVELS[difficulty] || DIFFICULTY_LEVELS[0];
-  const [liveTime, setLiveTime] = useState(null);
+  /** @type {[number | null, import('react').Dispatch<import('react').SetStateAction<number | null>>]} */
+  const [liveTime, setLiveTime] = useState(/** @type {number | null} */ (null));
 
   const hasReps = reps !== null && reps !== undefined && reps > 0;
   const showGo = isGo && !hasReps;

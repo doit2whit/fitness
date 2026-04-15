@@ -3,10 +3,17 @@ import { getDateKey } from '../../utils/helpers';
 import Icons from '../icons/Icons';
 import Card from '../ui/Card';
 
+/**
+ * @typedef {object} CalendarViewProps
+ * @property {import('../../types').HistoryWorkout[]} workoutHistory
+ */
+
+/** @param {CalendarViewProps} props */
 const CalendarView = ({ workoutHistory }) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
   const workoutsByDate = useMemo(() => {
+    /** @type {Record<string, import('../../types').HistoryWorkout[]>} */
     const map = {};
     workoutHistory.forEach(workout => {
       const dateKey = getDateKey(workout.startTime);
@@ -18,6 +25,7 @@ const CalendarView = ({ workoutHistory }) => {
     return map;
   }, [workoutHistory]);
 
+  /** @param {string} dateKey */
   const getDayColor = (dateKey) => {
     const workouts = workoutsByDate[dateKey];
     if (!workouts || workouts.length === 0) return null;
@@ -27,6 +35,7 @@ const CalendarView = ({ workoutHistory }) => {
 
     workouts.forEach(workout => {
       workout.exercises.forEach(exercise => {
+        if (exercise.type === 'interval') return;
         exercise.sets.forEach(set => {
           if (set.difficulty > 0) {
             totalDifficulty += set.difficulty;
@@ -53,6 +62,7 @@ const CalendarView = ({ workoutHistory }) => {
     const daysInMonth = lastDay.getDate();
     const startingDay = firstDay.getDay();
 
+    /** @type {(Date | null)[]} */
     const days = [];
 
     for (let i = 0; i < startingDay; i++) {
@@ -66,6 +76,7 @@ const CalendarView = ({ workoutHistory }) => {
     return days;
   };
 
+  /** @param {number} direction - -1 or +1 */
   const navigateMonth = (direction) => {
     setCurrentMonth(prev => {
       const newDate = new Date(prev);

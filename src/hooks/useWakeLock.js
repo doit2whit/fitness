@@ -1,14 +1,15 @@
 import { useEffect, useRef } from 'react';
 
 /**
- * useWakeLock - prevents screen from turning off during interval timers
- *
- * @param {boolean} isActive - whether to hold the wake lock
+ * useWakeLock - prevents screen from turning off during interval timers.
  *
  * Uses the Screen Wake Lock API. Silently no-ops on browsers that don't support it.
  * Automatically re-acquires the lock if the page becomes visible again (e.g., switching tabs).
+ *
+ * @param {boolean} isActive - whether to hold the wake lock
  */
 const useWakeLock = (isActive) => {
+  /** @type {import('react').MutableRefObject<WakeLockSentinel | null>} */
   const wakeLockRef = useRef(null);
 
   useEffect(() => {

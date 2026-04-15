@@ -6,8 +6,18 @@ import Icons from '../icons/Icons';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 
+/**
+ * @typedef {object} WorkoutDetailViewProps
+ * @property {import('../../types').HistoryWorkout} workout
+ * @property {import('../../types').Movement[]} movements
+ * @property {() => void} onBack
+ * @property {(updated: import('../../types').HistoryWorkout) => void} [onUpdateWorkout]
+ */
+
+/** @param {WorkoutDetailViewProps} props */
 const WorkoutDetailView = ({ workout, movements, onBack, onUpdateWorkout }) => {
-  const [editingExerciseIndex, setEditingExerciseIndex] = useState(null);
+  /** @type {[number | null, import('react').Dispatch<import('react').SetStateAction<number | null>>]} */
+  const [editingExerciseIndex, setEditingExerciseIndex] = useState(/** @type {number | null} */ (null));
   const [editingNotes, setEditingNotes] = useState(false);
   const [notes, setNotes] = useState(workout.notes || '');
 
@@ -15,8 +25,13 @@ const WorkoutDetailView = ({ workout, movements, onBack, onUpdateWorkout }) => {
   const difficultyInfo = getDifficultyInfo(avgDifficulty);
   const isQuickWorkout = workout.duration && workout.duration < 1800;
 
+  /** @param {string} id */
   const getMovementName = (id) => movements.find(m => m.id === id)?.name || 'Unknown';
 
+  /**
+   * @param {number} exIndex
+   * @param {string} newMovementId
+   */
   const handleChangeMovement = (exIndex, newMovementId) => {
     if (onUpdateWorkout) {
       const updatedExercises = [...workout.exercises];

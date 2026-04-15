@@ -17,10 +17,26 @@ import WorkoutSummaryCard from './WorkoutSummaryCard';
 import WorkoutDetailView from './WorkoutDetailView';
 import AllWorkoutsView from './AllWorkoutsView';
 
+/**
+ * @typedef {object} ActiveWorkoutProps
+ * @property {import('../../types').Movement[]} movements
+ * @property {import('react').Dispatch<import('react').SetStateAction<import('../../types').Movement[]>>} setMovements
+ * @property {import('../../types').Template[]} templates
+ * @property {import('../../types').HistoryWorkout[]} workoutHistory
+ * @property {import('react').Dispatch<import('react').SetStateAction<import('../../types').HistoryWorkout[]>>} setWorkoutHistory
+ * @property {import('../../types').Settings} settings
+ * @property {boolean} isWorkoutActive
+ * @property {import('react').Dispatch<import('react').SetStateAction<boolean>>} setIsWorkoutActive
+ * @property {import('../../types').ActiveWorkout | null} currentWorkout
+ * @property {import('react').Dispatch<import('react').SetStateAction<import('../../types').ActiveWorkout | null>>} setCurrentWorkout
+ */
+
+/** @param {ActiveWorkoutProps} props */
 const ActiveWorkout = ({ movements, setMovements, templates, workoutHistory, setWorkoutHistory, settings, isWorkoutActive, setIsWorkoutActive, currentWorkout, setCurrentWorkout }) => {
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
   const [showAddExercise, setShowAddExercise] = useState(false);
-  const [viewingWorkout, setViewingWorkout] = useState(null);
+  /** @type {[import('../../types').HistoryWorkout | null, import('react').Dispatch<import('react').SetStateAction<import('../../types').HistoryWorkout | null>>]} */
+  const [viewingWorkout, setViewingWorkout] = useState(/** @type {import('../../types').HistoryWorkout | null} */ (null));
   const [showAllWorkouts, setShowAllWorkouts] = useState(false);
 
   const [workoutDate, setWorkoutDate] = useState(() => getDateKey(new Date()));
@@ -54,6 +70,7 @@ const ActiveWorkout = ({ movements, setMovements, templates, workoutHistory, set
     }
   }, [isWorkoutActive]);
 
+  /** @param {import('../../types').Template | null} [template] */
   const startWorkout = (template = null) => {
     const selectedDate = new Date(workoutDate + 'T' + new Date().toTimeString().slice(0, 8));
 
@@ -263,6 +280,11 @@ const ActiveWorkout = ({ movements, setMovements, templates, workoutHistory, set
     setShowAddExercise(false);
   };
 
+  /**
+   * @param {number} exerciseIndex
+   * @param {number} setIndex
+   * @param {Partial<import('../../types').PlannedSet>} updates
+   */
   const updateSet = (exerciseIndex, setIndex, updates) => {
     setCurrentWorkout(prev => {
       const newExercises = [...prev.exercises];
@@ -290,6 +312,10 @@ const ActiveWorkout = ({ movements, setMovements, templates, workoutHistory, set
     });
   };
 
+  /**
+   * @param {number} exerciseIndex
+   * @param {Partial<import('../../types').ActiveExercise>} updates
+   */
   const updateExercise = (exerciseIndex, updates) => {
     setCurrentWorkout(prev => {
       const newExercises = [...prev.exercises];
@@ -298,6 +324,10 @@ const ActiveWorkout = ({ movements, setMovements, templates, workoutHistory, set
     });
   };
 
+  /**
+   * @param {number} exerciseIndex
+   * @param {boolean} isComplete
+   */
   const markExerciseComplete = (exerciseIndex, isComplete) => {
     setCurrentWorkout(prev => {
       const newExercises = [...prev.exercises];
@@ -314,6 +344,10 @@ const ActiveWorkout = ({ movements, setMovements, templates, workoutHistory, set
     });
   };
 
+  /**
+   * @param {number} exerciseIndex
+   * @param {number} weight
+   */
   const addSetToExercise = (exerciseIndex, weight) => {
     setCurrentWorkout(prev => {
       const newExercises = [...prev.exercises];
@@ -328,6 +362,7 @@ const ActiveWorkout = ({ movements, setMovements, templates, workoutHistory, set
     });
   };
 
+  /** @param {number} exerciseIndex */
   const removeSetFromExercise = (exerciseIndex) => {
     setCurrentWorkout(prev => {
       const newExercises = [...prev.exercises];
@@ -339,6 +374,7 @@ const ActiveWorkout = ({ movements, setMovements, templates, workoutHistory, set
     });
   };
 
+  /** @param {number} exerciseIndex */
   const removeExercise = (exerciseIndex) => {
     setCurrentWorkout(prev => ({
       ...prev,
@@ -346,8 +382,10 @@ const ActiveWorkout = ({ movements, setMovements, templates, workoutHistory, set
     }));
   };
 
+  /** @param {string} id */
   const getMovementName = (id) => movements.find(m => m.id === id)?.name || 'Unknown';
 
+  /** @param {import('../../types').HistoryWorkout} updatedWorkout */
   const updateWorkoutInHistory = (updatedWorkout) => {
     setWorkoutHistory(prev =>
       prev.map(w => w.id === updatedWorkout.id ? updatedWorkout : w)

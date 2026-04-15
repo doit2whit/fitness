@@ -7,6 +7,20 @@ import ConfirmDialog from '../ui/ConfirmDialog';
 import SetCircle from './SetCircle';
 import FloatingRestTimer from './FloatingRestTimer';
 
+/**
+ * @typedef {object} ExerciseTrackerProps
+ * @property {import('../../types').ActiveSetsExercise} exercise
+ * @property {string} movementName
+ * @property {(index: number, updates: Partial<import('../../types').PlannedSet>) => void} onUpdateSet
+ * @property {() => void} onAddSet
+ * @property {() => void} onRemoveSet
+ * @property {() => void} onRemoveExercise
+ * @property {(updates: Partial<import('../../types').ActiveSetsExercise>) => void} onUpdateExercise
+ * @property {() => void} onMarkComplete
+ * @property {import('../../types').Unit} defaultUnit
+ */
+
+/** @param {ExerciseTrackerProps} props */
 const ExerciseTracker = ({
   exercise,
   movementName,
@@ -18,7 +32,8 @@ const ExerciseTracker = ({
   onMarkComplete,
   defaultUnit
 }) => {
-  const [editingWeightIndex, setEditingWeightIndex] = useState(null);
+  /** @type {[number | null, import('react').Dispatch<import('react').SetStateAction<number | null>>]} */
+  const [editingWeightIndex, setEditingWeightIndex] = useState(/** @type {number | null} */ (null));
   const [tempWeight, setTempWeight] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 

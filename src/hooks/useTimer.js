@@ -1,6 +1,20 @@
 import { useState, useEffect, useCallback } from 'react';
 import { formatTime } from '../utils/helpers';
 
+/**
+ * @typedef {object} TimerControls
+ * @property {number} seconds
+ * @property {(val?: number) => void} reset
+ * @property {string} formatted - seconds rendered as `H:MM:SS` or `M:SS`
+ */
+
+/**
+ * Simple seconds-counting timer. Ticks while `isRunning` is true.
+ *
+ * @param {boolean} isRunning
+ * @param {number} [initialSeconds=0]
+ * @returns {TimerControls}
+ */
 const useTimer = (isRunning, initialSeconds = 0) => {
   const [seconds, setSeconds] = useState(initialSeconds);
 

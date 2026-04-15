@@ -4,6 +4,14 @@ import { kgToLbs, formatTime } from '../../utils/helpers';
 import Card from '../ui/Card';
 import Select from '../ui/Select';
 
+/**
+ * @typedef {object} TrendsViewProps
+ * @property {import('../../types').HistoryWorkout[]} workoutHistory
+ * @property {import('../../types').Movement[]} movements
+ * @property {import('../../types').Settings} settings
+ */
+
+/** @param {TrendsViewProps} props */
 const TrendsView = ({ workoutHistory, movements, settings }) => {
   const [selectedMovement, setSelectedMovement] = useState('');
 

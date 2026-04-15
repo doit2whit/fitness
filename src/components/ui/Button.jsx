@@ -1,5 +1,16 @@
 import React from 'react';
 
+/**
+ * @typedef {object} ButtonProps
+ * @property {import('react').ReactNode} [children]
+ * @property {import('react').MouseEventHandler<HTMLButtonElement>} [onClick]
+ * @property {'primary' | 'secondary' | 'danger' | 'success' | 'ghost'} [variant]
+ * @property {'sm' | 'md' | 'lg'} [size]
+ * @property {boolean} [disabled]
+ * @property {string} [className]
+ */
+
+/** @param {ButtonProps} props */
 const Button = ({ children, onClick, variant = 'primary', size = 'md', disabled = false, className = '' }) => {
   const baseStyles = 'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-navy-800 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95';
 

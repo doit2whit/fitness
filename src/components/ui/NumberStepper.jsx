@@ -1,6 +1,16 @@
 import React from 'react';
 import Icons from '../icons/Icons';
 
+/**
+ * @typedef {object} NumberStepperProps
+ * @property {number} value
+ * @property {(next: number) => void} onChange
+ * @property {number} [min]
+ * @property {number} [max]
+ * @property {string} [label]
+ */
+
+/** @param {NumberStepperProps} props */
 const NumberStepper = ({ value, onChange, min = 1, max = 20, label }) => (
   <div className="space-y-1">
     {label && <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{label}</label>}

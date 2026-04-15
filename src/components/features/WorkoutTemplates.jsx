@@ -8,7 +8,17 @@ import Badge from '../ui/Badge';
 import Modal from '../ui/Modal';
 import Input from '../ui/Input';
 
+/**
+ * @typedef {object} InlineStepperProps
+ * @property {number} value
+ * @property {(next: number) => void} onChange
+ * @property {number} [min]
+ * @property {number} [max]
+ * @property {string} [label]
+ */
+
 // Compact inline stepper for numbers (sets, rounds)
+/** @param {InlineStepperProps} props */
 const InlineStepper = ({ value, onChange, min = 1, max = 20, label }) => (
   <div className="flex items-center gap-1.5">
     {label && <span className="text-xs text-gray-500 dark:text-gray-400 mr-1">{label}</span>}
@@ -30,8 +40,20 @@ const InlineStepper = ({ value, onChange, min = 1, max = 20, label }) => (
   </div>
 );
 
+/**
+ * @typedef {object} InlineTimeStepperProps
+ * @property {number} value - seconds
+ * @property {(next: number) => void} onChange
+ * @property {number} [min]
+ * @property {number} [max]
+ * @property {number} [step]
+ * @property {string} [label]
+ */
+
 // Compact inline stepper for time values (work/rest duration)
+/** @param {InlineTimeStepperProps} props */
 const InlineTimeStepper = ({ value, onChange, min = 0, max = 600, step = 5, label }) => {
+  /** @param {number} s */
   const formatSeconds = (s) => {
     const mins = Math.floor(s / 60);
     const secs = s % 60;
@@ -59,7 +81,16 @@ const InlineTimeStepper = ({ value, onChange, min = 0, max = 600, step = 5, labe
   );
 };
 
+/**
+ * @typedef {object} MovementConfigProps
+ * @property {import('../../types').TemplateMovement} config
+ * @property {string} movementName
+ * @property {(updates: Partial<import('../../types').TemplateMovement>) => void} onUpdate
+ * @property {import('../../types').Unit} defaultUnit
+ */
+
 // Per-movement config panel shown below each selected movement
+/** @param {MovementConfigProps} props */
 const MovementConfig = ({ config, movementName, onUpdate, defaultUnit }) => {
   const tierOptions = [1, 2, 3, 4];
 
@@ -170,24 +201,48 @@ const MovementConfig = ({ config, movementName, onUpdate, defaultUnit }) => {
   );
 };
 
+/**
+ * @typedef {object} WorkoutTemplatesProps
+ * @property {import('../../types').Template[]} templates
+ * @property {import('react').Dispatch<import('react').SetStateAction<import('../../types').Template[]>>} setTemplates
+ * @property {import('../../types').Movement[]} movements
+ * @property {import('../../types').Settings} settings
+ * @property {string[]} deletedDefaultTemplates
+ * @property {import('react').Dispatch<import('react').SetStateAction<string[]>>} setDeletedDefaultTemplates
+ */
+
+/** @param {WorkoutTemplatesProps} props */
 const WorkoutTemplates = ({ templates, setTemplates, movements, settings, deletedDefaultTemplates, setDeletedDefaultTemplates }) => {
   const [showCreateTemplate, setShowCreateTemplate] = useState(false);
-  const [newTemplate, setNewTemplate] = useState({ name: '', movements: [] });
-  const [editingTemplate, setEditingTemplate] = useState(null);
+  /** @type {[{ name: string, movements: import('../../types').TemplateMovement[] }, import('react').Dispatch<any>]} */
+  const [newTemplate, setNewTemplate] = useState({ name: '', movements: /** @type {import('../../types').TemplateMovement[]} */ ([]) });
+  /** @type {[import('../../types').Template | null, import('react').Dispatch<import('react').SetStateAction<import('../../types').Template | null>>]} */
+  const [editingTemplate, setEditingTemplate] = useState(/** @type {import('../../types').Template | null} */ (null));
 
   const defaultUnit = settings?.defaultUnit || 'lbs';
 
+  /** @param {string} id */
   const getMovementName = (id) => movements.find(m => m.id === id)?.name || 'Unknown';
+  /** @param {string | import('../../types').TemplateMovement} entry */
   const getMovementId = (entry) => typeof entry === 'string' ? entry : entry.movementId;
 
+  /**
+   * @param {(string | import('../../types').TemplateMovement)[]} movementsList
+   * @param {string} movementId
+   */
   const isMovementSelected = (movementsList, movementId) =>
     movementsList.some(m => getMovementId(m) === movementId);
 
+  /**
+   * @param {(string | import('../../types').TemplateMovement)[]} movementsList
+   * @param {string} movementId
+   */
   const getMovementConfig = (movementsList, movementId) =>
     movementsList.find(m => getMovementId(m) === movementId);
 
   const handleCreateTemplate = () => {
     if (!newTemplate.name.trim() || newTemplate.movements.length === 0) return;
+    /** @type {import('../../types').Template} */
     const template = {
       id: generateId(),
       name: newTemplate.name.trim(),
@@ -204,6 +259,7 @@ const WorkoutTemplates = ({ templates, setTemplates, movements, settings, delete
     setEditingTemplate(null);
   };
 
+  /** @param {string} id */
   const handleDeleteTemplate = (id) => {
     // Track deleted default templates so they don't re-appear on reload
     if (id.startsWith('default_')) {

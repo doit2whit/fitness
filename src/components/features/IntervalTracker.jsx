@@ -8,6 +8,16 @@ import Card from '../ui/Card';
 import Button from '../ui/Button';
 import ConfirmDialog from '../ui/ConfirmDialog';
 
+/**
+ * @typedef {object} IntervalTrackerProps
+ * @property {import('../../types').ActiveIntervalExercise} exercise
+ * @property {string} movementName
+ * @property {(updates: Partial<import('../../types').ActiveIntervalExercise>) => void} onUpdateExercise
+ * @property {() => void} onRemoveExercise
+ * @property {import('../../types').Unit} defaultUnit
+ */
+
+/** @param {IntervalTrackerProps} props */
 const IntervalTracker = ({ exercise, movementName, onUpdateExercise, onRemoveExercise, defaultUnit }) => {
   const [showRemoveConfirm, setShowRemoveConfirm] = React.useState(false);
 
@@ -34,6 +44,7 @@ const IntervalTracker = ({ exercise, movementName, onUpdateExercise, onRemoveExe
   }, [timer.state]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Handle difficulty selection for the current (active) block
+  /** @param {import('../../types').Difficulty} difficulty */
   const handleCurrentBlockDifficulty = (difficulty) => {
     const blocks = [
       ...timer.completedBlocks.map(b => ({ difficulty: b.difficulty, totalTime: b.totalTime })),
@@ -43,6 +54,10 @@ const IntervalTracker = ({ exercise, movementName, onUpdateExercise, onRemoveExe
   };
 
   // Handle difficulty selection for a previously completed block
+  /**
+   * @param {number} blockIndex
+   * @param {import('../../types').Difficulty} difficulty
+   */
   const handlePastBlockDifficulty = (blockIndex, difficulty) => {
     timer.setBlockDifficulty(blockIndex, difficulty);
     // Rebuild blocks array with updated difficulty

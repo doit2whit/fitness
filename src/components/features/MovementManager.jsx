@@ -7,12 +7,23 @@ import Badge from '../ui/Badge';
 import Modal from '../ui/Modal';
 import Input from '../ui/Input';
 
+/**
+ * @typedef {object} MovementManagerProps
+ * @property {import('../../types').Movement[]} movements
+ * @property {import('react').Dispatch<import('react').SetStateAction<import('../../types').Movement[]>>} setMovements
+ * @property {string[]} bodyParts
+ * @property {import('react').Dispatch<import('react').SetStateAction<string[]>>} setBodyParts
+ */
+
+/** @param {MovementManagerProps} props */
 const MovementManager = ({ movements, setMovements, bodyParts, setBodyParts }) => {
   const [showAddMovement, setShowAddMovement] = useState(false);
   const [showAddBodyPart, setShowAddBodyPart] = useState(false);
-  const [newMovement, setNewMovement] = useState({ name: '', bodyParts: [] });
+  /** @type {[{ name: string, bodyParts: string[] }, import('react').Dispatch<any>]} */
+  const [newMovement, setNewMovement] = useState({ name: '', bodyParts: /** @type {string[]} */ ([]) });
   const [newBodyPart, setNewBodyPart] = useState('');
-  const [editingMovement, setEditingMovement] = useState(null);
+  /** @type {[import('../../types').Movement | null, import('react').Dispatch<import('react').SetStateAction<import('../../types').Movement | null>>]} */
+  const [editingMovement, setEditingMovement] = useState(/** @type {import('../../types').Movement | null} */ (null));
 
   const handleAddMovement = () => {
     if (!newMovement.name.trim()) return;
@@ -32,6 +43,7 @@ const MovementManager = ({ movements, setMovements, bodyParts, setBodyParts }) =
     setEditingMovement(null);
   };
 
+  /** @param {string} id */
   const handleDeleteMovement = (id) => {
     setMovements(movements.filter(m => m.id !== id));
   };
@@ -43,6 +55,7 @@ const MovementManager = ({ movements, setMovements, bodyParts, setBodyParts }) =
     setShowAddBodyPart(false);
   };
 
+  /** @param {string} part */
   const handleDeleteBodyPart = (part) => {
     setBodyParts(bodyParts.filter(p => p !== part));
     setMovements(movements.map(m => ({
@@ -51,6 +64,10 @@ const MovementManager = ({ movements, setMovements, bodyParts, setBodyParts }) =
     })));
   };
 
+  /**
+   * @param {string} part
+   * @param {boolean} [isNew]
+   */
   const toggleBodyPart = (part, isNew = false) => {
     if (isNew) {
       const current = newMovement.bodyParts;

@@ -1,5 +1,21 @@
 import React from 'react';
 
+/**
+ * @typedef {object} TabItem
+ * @property {string} id
+ * @property {string} label
+ * @property {import('react').ReactNode} [icon]
+ * @property {boolean} [showDot]
+ */
+
+/**
+ * @typedef {object} TabsProps
+ * @property {TabItem[]} tabs
+ * @property {string} activeTab
+ * @property {(id: string) => void} onChange
+ */
+
+/** @param {TabsProps} props */
 const Tabs = ({ tabs, activeTab, onChange }) => (
   <div className="bg-white dark:bg-navy-800 rounded-2xl shadow-sm border border-gray-100 dark:border-navy-900 p-1.5">
     <nav className="flex space-x-1 overflow-x-auto" aria-label="Tabs">

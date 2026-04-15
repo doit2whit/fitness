@@ -5,13 +5,21 @@ import Icons from '../icons/Icons';
 import Card from '../ui/Card';
 import Badge from '../ui/Badge';
 
+/**
+ * @typedef {object} WorkoutSummaryCardProps
+ * @property {import('../../types').HistoryWorkout} workout
+ * @property {import('../../types').Movement[]} movements
+ * @property {() => void} [onClick]
+ */
+
+/** @param {WorkoutSummaryCardProps} props */
 const WorkoutSummaryCard = ({ workout, movements, onClick }) => {
   const avgDifficulty = getWorkoutAvgDifficulty(workout);
   const difficultyInfo = getDifficultyInfo(avgDifficulty);
   const totalSets = workout.exercises.reduce((sum, ex) =>
-    sum + (ex.sets ? ex.sets.filter(s => s.reps !== null && s.reps !== undefined).length : 0), 0
+    sum + (ex.type !== 'interval' && ex.sets ? ex.sets.filter(s => s.reps !== null && s.reps !== undefined).length : 0), 0
   );
-  const intervalExercises = workout.exercises.filter(ex => ex.type === 'interval');
+  const intervalExercises = /** @type {import('../../types').HistoryIntervalExercise[]} */ (workout.exercises.filter(ex => ex.type === 'interval'));
   const intervalCount = intervalExercises.length;
   const totalBlocks = intervalExercises.reduce((sum, ex) => sum + (ex.blocks ? ex.blocks.length : 1), 0);
   const isQuickWorkout = workout.duration && workout.duration < 1800;

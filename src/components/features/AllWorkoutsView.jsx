@@ -3,6 +3,15 @@ import Icons from '../icons/Icons';
 import Card from '../ui/Card';
 import WorkoutSummaryCard from './WorkoutSummaryCard';
 
+/**
+ * @typedef {object} AllWorkoutsViewProps
+ * @property {import('../../types').HistoryWorkout[]} workoutHistory
+ * @property {import('../../types').Movement[]} movements
+ * @property {(workout: import('../../types').HistoryWorkout) => void} onSelectWorkout
+ * @property {() => void} onBack
+ */
+
+/** @param {AllWorkoutsViewProps} props */
 const AllWorkoutsView = ({ workoutHistory, movements, onSelectWorkout, onBack }) => {
   return (
     <div className="space-y-4">

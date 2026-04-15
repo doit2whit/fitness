@@ -1,5 +1,11 @@
 import React from 'react';
 
+/**
+ * Props are the native `<input>` props plus an optional `label`.
+ * @typedef {import('react').InputHTMLAttributes<HTMLInputElement> & { label?: string }} InputProps
+ */
+
+/** @param {InputProps} props */
 const Input = ({ label, ...props }) => (
   <div className="space-y-1">
     {label && <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{label}</label>}

@@ -1,11 +1,14 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 
 // Audio beep helper using Web Audio API
+/** @type {AudioContext | null} */
 let audioContext = null;
 
+/** @returns {AudioContext} */
 const getAudioContext = () => {
   if (!audioContext) {
-    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const Ctx = window.AudioContext || /** @type {any} */ (window).webkitAudioContext;
+    audioContext = new Ctx();
   }
   // Resume if suspended (browser policy requires user gesture)
   if (audioContext.state === 'suspended') {
@@ -14,6 +17,10 @@ const getAudioContext = () => {
   return audioContext;
 };
 
+/**
+ * @param {number} frequency
+ * @param {number} duration - seconds
+ */
 const playBeep = (frequency, duration) => {
   try {
     const ctx = getAudioContext();
@@ -73,31 +80,60 @@ const playComplete = () => {                                  // three ascending
 };
 
 /**
- * useIntervalTimer - state machine hook for interval exercises
- *
- * States: 'idle' → 'countdown' → 'work' → 'rest' → 'work' → ... → 'complete'
+ * @typedef {'idle' | 'countdown' | 'work' | 'rest' | 'paused' | 'complete'} IntervalTimerState
+ */
+
+/**
+ * @typedef {object} IntervalTimerInternals
+ * @property {IntervalTimerState} state
+ * @property {number} currentRound
+ * @property {number} timeRemaining - seconds left in current phase
+ * @property {number} totalElapsed - work+rest seconds in current block
+ * @property {IntervalTimerState | null} pausedPhase - phase we were in before pausing
+ * @property {{ totalTime: number, difficulty: number }[]} completedBlocks
+ */
+
+/**
+ * @typedef {object} IntervalTimerControls
+ * @property {IntervalTimerState} state
+ * @property {number} currentRound
+ * @property {number} timeRemaining
+ * @property {number} totalElapsed
+ * @property {{ totalTime: number, difficulty: number }[]} completedBlocks
+ * @property {() => void} start
+ * @property {() => void} pause
+ * @property {() => void} resume
+ * @property {() => void} reset
+ * @property {() => void} goAgain
+ * @property {(blockIndex: number, difficulty: number) => void} setBlockDifficulty
+ */
+
+/**
+ * useIntervalTimer - state machine hook for interval exercises.
+ * States: 'idle' → 'countdown' → 'work' → 'rest' → 'work' → ... → 'complete'.
  *
  * Uses refs for mutable timer state to avoid stale closure issues in setInterval.
  *
- * @param {Object} config
- * @param {number} config.workDuration - seconds of work per round
- * @param {number} config.restDuration - seconds of rest between rounds
- * @param {number} config.rounds - total number of work rounds
+ * @param {{ workDuration: number, restDuration: number, rounds: number }} config
+ * @returns {IntervalTimerControls}
  */
 const useIntervalTimer = ({ workDuration, restDuration, rounds }) => {
   // React state for rendering
+  // eslint-disable-next-line no-unused-vars
   const [renderTick, setRenderTick] = useState(0);
 
   // All mutable timer state lives in refs to avoid stale closures
+  /** @type {import('react').MutableRefObject<IntervalTimerInternals>} */
   const timerState = useRef({
-    state: 'idle',        // 'idle' | 'countdown' | 'work' | 'rest' | 'paused' | 'complete'
+    state: 'idle',
     currentRound: 1,
     timeRemaining: workDuration,
     totalElapsed: 0,
-    pausedPhase: null,    // which phase we were in before pausing
-    completedBlocks: [],  // array of { totalTime, difficulty } for previous blocks
+    pausedPhase: null,
+    completedBlocks: [],
   });
 
+  /** @type {import('react').MutableRefObject<ReturnType<typeof setInterval> | null>} */
   const intervalRef = useRef(null);
 
   const forceRender = useCallback(() => {
@@ -225,7 +261,7 @@ const useIntervalTimer = ({ workDuration, restDuration, rounds }) => {
     forceRender();
   }, [workDuration, clearTimer, forceRender]);
 
-  const setBlockDifficulty = useCallback((blockIndex, difficulty) => {
+  const setBlockDifficulty = useCallback(/** @param {number} blockIndex @param {number} difficulty */ (blockIndex, difficulty) => {
     const ts = timerState.current;
     if (blockIndex >= 0 && blockIndex < ts.completedBlocks.length) {
       ts.completedBlocks[blockIndex].difficulty = difficulty;

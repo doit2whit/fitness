@@ -2,14 +2,27 @@ import React, { useState } from 'react';
 import Icons from '../icons/Icons';
 
 /**
- * TimeStepper — time input that steps in 5-second increments
+ * @typedef {object} TimeStepperProps
+ * @property {number} value - seconds
+ * @property {(next: number) => void} onChange
+ * @property {number} [min]
+ * @property {number} [max]
+ * @property {number} [step] - seconds per stepper tap
+ * @property {string} [label]
+ */
+
+/**
+ * TimeStepper — time input that steps in 5-second increments by default.
  * Displays values as "0:30", "1:00", etc.
  * Allows typing a custom value via an inline text input.
+ *
+ * @param {TimeStepperProps} props
  */
 const TimeStepper = ({ value, onChange, min = 5, max = 600, step = 5, label }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState('');
 
+  /** @param {number} seconds */
   const formatSeconds = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -31,6 +44,7 @@ const TimeStepper = ({ value, onChange, min = 5, max = 600, step = 5, label }) =
     setIsEditing(false);
   };
 
+  /** @param {import('react').KeyboardEvent<HTMLInputElement>} e */
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') handleEditConfirm();
     if (e.key === 'Escape') setIsEditing(false);

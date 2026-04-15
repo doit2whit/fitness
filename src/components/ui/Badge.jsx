@@ -1,6 +1,18 @@
 import React from 'react';
 
+/**
+ * @typedef {'gray' | 'blue' | 'green' | 'red' | 'orange' | 'indigo' | 'purple'} BadgeColor
+ */
+
+/**
+ * @typedef {object} BadgeProps
+ * @property {import('react').ReactNode} [children]
+ * @property {BadgeColor} [color]
+ */
+
+/** @param {BadgeProps} props */
 const Badge = ({ children, color = 'gray' }) => {
+  /** @type {Record<BadgeColor, string>} */
   const colors = {
     gray: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
     blue: 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300',

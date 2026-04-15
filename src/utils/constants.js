@@ -1,3 +1,12 @@
+/**
+ * @typedef {object} DifficultyLevel
+ * @property {import('../types').Difficulty} value
+ * @property {string} label
+ * @property {string} color - swatch background color
+ * @property {string} textColor - text color on the swatch
+ */
+
+/** @type {DifficultyLevel[]} */
 export const DIFFICULTY_LEVELS = [
   { value: 0, label: 'None', color: '#e5e7eb', textColor: '#6b7280' },
   { value: 1, label: 'Very Easy', color: '#1e40af', textColor: '#ffffff' },
@@ -7,10 +16,12 @@ export const DIFFICULTY_LEVELS = [
   { value: 5, label: 'Very Hard', color: '#dc2626', textColor: '#ffffff' }
 ];
 
+/** @type {string[]} */
 export const DEFAULT_BODY_PARTS = [
   'Chest', 'Back', 'Shoulders', 'Biceps', 'Triceps', 'Legs', 'Core', 'Glutes'
 ];
 
+/** @type {import('../types').Movement[]} */
 export const DEFAULT_MOVEMENTS = [
   { id: '1', name: 'Bench Press', bodyParts: ['Chest', 'Triceps', 'Shoulders'] },
   { id: '2', name: 'Barbell Squats', bodyParts: ['Quads', 'Glutes', 'Core'] },
@@ -40,6 +51,7 @@ export const DEFAULT_MOVEMENTS = [
   { id: '26', name: 'Pushups', bodyParts: ['Chest', 'Triceps', 'Shoulders', 'Core'] }
 ];
 
+/** @type {Record<import('../types').Unit, number>} */
 export const DEFAULT_BAR_WEIGHT = { lbs: 45, kg: 20 };
 export const DEFAULT_SETS = 5;
 export const DEFAULT_WEIGHT = 1;
@@ -50,10 +62,14 @@ export const DEFAULT_REST_DURATION = 10;  // seconds
 export const DEFAULT_ROUNDS = 6;
 
 // Tier system for auto-progression
+/** @type {Record<1 | 2 | 3 | 4, string>} */
 export const TIER_LABELS = { 1: 'T1', 2: 'T2', 3: 'T3', 4: 'T4' };
+/** @type {Record<1 | 2 | 3 | 4, number>} */
 export const TIER_REP_THRESHOLDS = { 1: 6, 2: 10, 3: 12, 4: 15 };
+/** @type {Record<import('../types').Unit, number>} */
 export const WEIGHT_INCREMENT = { lbs: 5, kg: 2.5 };
 
+/** @type {import('../types').Template[]} */
 export const DEFAULT_TEMPLATES = [
   {
     id: 'default_day1',
